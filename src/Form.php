@@ -11,7 +11,7 @@
 
 /**
  */
-class Form
+class Form implements ArrayAccess
 {
 	const EACH = 'each';
 
@@ -56,6 +56,19 @@ class Form
 		$this->values = $default_values;
 
 		$this->setRules($rules);
+	}
+
+	/**
+	 * @internal
+	 */
+	public static function checkStringNotEmpty($field, $name = 'Field name')
+	{
+		if ( ! is_string($field) ) {
+			throw new InvalidArgumentException(sprintf("$name must be a string (%s given)", gettype($field)));
+		}
+		if ( ! $field ) {
+			throw new InvalidArgumentException("$name cannot be empty");
+		}
 	}
 
 // RULES
@@ -109,7 +122,7 @@ class Form
 	public function getRules($field = '')
 	{
 		if ( ! is_string($field) ) {
-			throw new InvalidArgumentException("Field name must be a string");
+			throw new InvalidArgumentException(sprintf("Field name must be a string (%s given)", gettype($field)));
 		}
 
 		if ( ! $field ) {
@@ -131,12 +144,7 @@ class Form
 	 */
 	public function hasRules($field)
 	{
-		if ( ! is_string($field) ) {
-			throw new InvalidArgumentException("Field name must be a string");
-		}
-		if ( ! $field ) {
-			throw new InvalidArgumentException("Field name cannot be empty");
-		}
+		self::checkStringNotEmpty($field);
 
 		return isset($this->rules[$field]) && ! empty($this->rules[$field]);
 	}
@@ -151,19 +159,11 @@ class Form
 	 */
 	public function getRuleValue($field, $rule_name)
 	{
-		if ( ! $field ) {
-			throw new InvalidArgumentException("Field name cannot be empty");
-		}
+		self::checkStringNotEmpty($field);
 
 		$rules = $this->getRules($field);
 
-		if ( ! is_string($rule_name) ) {
-			throw new InvalidArgumentException("Rule name must a string");
-		}
-
-		if ( ! $rule_name ) {
-			throw new InvalidArgumentException("Rule name cannot be empty");
-		}
+		self::checkStringNotEmpty($rule_name, 'Rule name');
 
 		if ( ! array_key_exists($rule_name, $rules) ) {
 			return null;
@@ -192,9 +192,7 @@ class Form
 	public static function parseRules(array $rules)
 	{
 		foreach ( $rules as $field => & $field_rules ) {
-			if ( ! is_string($field) ) {
-				throw new InvalidArgumentException(sprintf("Field name must be a string (%s given)", gettype($field)));
-			}
+			self::checkStringNotEmpty($field);
 
 			if ( is_array($field_rules) ) {
 				$field_rules = self::expandRulesArray($field_rules);
@@ -227,12 +225,7 @@ class Form
 		foreach ( $array as $key => $param ) {
 			// the validator has been written as array value
 			if ( is_int($key) ) {
-				if ( ! is_string($param) ) {
-					throw new InvalidArgumentException("Rule name must be a string");
-				}
-				if ( ! $param ) {
-					throw new InvalidArgumentException("Rule name cannot be empty");
-				}
+				self::checkStringNotEmpty($param, 'Rule name');
 				$new_array[$param] = true;
 			}
 			elseif ( $key == '' ) {
@@ -252,79 +245,187 @@ class Form
 
 // VALUES
 
+	/**
+	 * Return all the values as an assoc array.
+	 * [field_name => value]
+	 *
+	 * @return array
+	 */
 	public function getValues()
 	{
 		return $this->values;
 	}
 
-	public function getValue($name)
+	/** 
+	 * Return the value of a single field.
+	 *
+	 * @param $field string Field name
+	 * @param $default mixed Value to return if not exist
+	 * @return mixed
+	 */
+	public function getValue($field, $default = null)
 	{
-		return array_key_exists($name, $this->values) ? $this->values[$name] : null;
+		self::checkStringNotEmpty($field);
+		return array_key_exists($field, $this->values) ? $this->values[$field] : $default;
 	}
 
-	public function __get($name)
+	/**
+	 * Magic getter to enable $form->field syntax to get a value.
+	 *
+	 * @see getValue
+	 */
+	public function __get($field)
 	{
-		return $this->getValue($name);
+		return $this->getValue($field);
+	}
+
+	/**
+	 * ArrayAccess interface to enable $form['field'] syntax to get a value.
+	 *
+	 * @see getValue
+	 */
+	public function offsetGet($field)
+	{
+		return $this->getValue($field);
 	}
 
 	/**
 	 * Set default values of the form.
 	 * The values won't be validated.
+	 *
 	 * @return $this
 	 */
-	public function setValues($values)
+	public function setValues(array $values)
 	{
 		$this->values = $values;
 		return $this;
 	}
 
-	public function setValue($name, $value)
+	/** 
+	 * Set a single value.
+	 *
+	 * @param $field string
+	 * @param $value mixed
+	 * @return $this
+	 */
+	public function setValue($field, $value)
 	{
-		$this->values[$name] = $value;
+		self::checkStringNotEmpty($field);
+		$this->values[$field] = $value;
 		return $this;
 	}
 
-	public function __set($name, $value)
+	/**
+	 * Magic setter to enable $form->field = 42 syntax.
+	 *
+	 * @see setValue
+	 */
+	public function __set($field, $value)
 	{
-		return $this->setValue($name, $value);
+		return $this->setValue($field, $value);
 	}
 
-	public function addValues($values)
+	/**
+	 * ArrayAccess interface to enable $form['field'] = 42 syntax.
+	 *
+	 * @see setValue
+	 */
+	public function offsetSet($field, $value)
+	{
+		return $this->setValue($field, $value);
+	}
+
+	/**
+	 * Merge values with existing array.
+	 *
+	 * @param $values array
+	 * @return $this
+	 */
+	public function addValues(array $values)
 	{
 		$this->values = array_merge($this->values, $values);
 		return $this;
 	}
 
-//@{
 	/**
-	 * Error management
+	 * @internal
 	 */
-
-	/**
-	 * If $name is not given, returns all the errors.
-	 * @return array
-	 */
-	public function getErrors($name = null)
+	public function offsetExists($field)
 	{
-		if ( $name === null ) {
-			return $this->errors;
-		}
-		else {
-			return isset($this->errors[$name]) ? $this->errors[$name] : array();
-		}
+		return array_key_exists($field, $this->values);
 	}
 
 	/**
-	 * Return true if a field has errors
+	 * @internal
 	 */
-	public function hasErrors($name = null)
+	public function offsetUnset($field)
 	{
-		if ( $name === null ) {
+		if ( array_key_exists($field, $this->values) ) {
+			unset($this->values[$field]);
+		}
+	}
+
+// ERRORS
+
+	/**
+	 * Return the errors array of the form or of a given field
+	 *
+	 * Error array is like the rules array, expect is only contains the invalid
+	 * fields and rules. Example:
+	 * [
+	 *   field_name => [
+	 *     rule_name => rule_value
+	 *     ...
+	 *   ]
+	 * ]
+	 *
+	 * @param $field string If empty, return the whole error array
+	 * @return array
+	 */
+	public function getErrors($field = '')
+	{
+		if ( ! is_string($field) ) {
+			throw new InvalidArgumentException(sprintf("Field name must be a string (%s given)", gettype($field)));
+		}
+
+		if ( ! $field ) {
+			return $this->errors;
+		}
+
+		if ( ! isset($this->errors[$field]) ) {
+			return array();
+		}
+
+		return $this->errors[$field];
+	}
+
+	/**
+	 * @internal
+	 * Used for testing and debugging
+	 */
+	public function setErrors(array $errors)
+	{
+		$this->errors = $errors;
+		return $this;
+	}
+
+	/**
+	 * Return true if a field or the entire form has errors
+	 *
+	 * @param $field string optional
+	 * @return bool
+	 */
+	public function hasErrors($field = '')
+	{
+		if ( ! is_string($field) ) {
+			throw new InvalidArgumentException(sprintf("Field name must be a string (%s given)", gettype($field)));
+		}
+
+		if ( ! $field ) {
 			return ! empty($this->errors);
 		}
-		else {
-			return isset($this->errors[$name]);
-		}
+
+		return isset($this->errors[$field]);
 	}
 
 	public function addError($message, $field = '', $param = true)
@@ -332,8 +433,11 @@ class Form
 		$this->errors[$field][$message] = $param;
 	}
 
-//@}
+// VALIDATION
 
+	/**
+	 * @deprecated
+	 */
 	public function validate($values = array(), array $opt = array())
 	{
 		return $this->validates($values, $opt);
@@ -343,7 +447,7 @@ class Form
 	 * The values that are not in $rules array will be ignored (and not saved in the class).
 	 * @return bool
 	 */
-	public function validates($values = array(), array $opt = array())
+	public function validates(array $values, array $opt = array())
 	{
 		$opt = array_merge(array(
 			'rules' => $this->rules,
@@ -363,10 +467,16 @@ class Form
 			}
 
 			if ( $rules instanceof self ) {
-				$rules->validates($value, array(
+				if ( ! is_array($value) ) {
+					$value = array($value);
+				}
+				$errors = $rules->validates($value, array(
 					'use_default_if_missing' => $opt['use_default_if_missing']
 				));
-				$errors = $rules->getErrors();
+				$value = $rules->getValues();
+				if ( $errors !== true ) {
+					$errors = $rules->getErrors();
+				}
 			}
 			else {
 				$errors = $this->validateValue($value, $rules, $opt);

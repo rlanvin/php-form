@@ -2,6 +2,9 @@
 
 class FormTest extends PHPUnit_Framework_TestCase
 {
+
+// RULES TESTS
+
 	public function validRules()
 	{
 		// return compressed and uncompressed
@@ -61,9 +64,12 @@ class FormTest extends PHPUnit_Framework_TestCase
 	 */
 	public function testGetRules($compressed, $uncompressed)
 	{
+		$form = new Form();
+		$this->assertEquals(array(), $form->getRules());
+		$this->assertEquals(array(), $form->getRules('unset_field'));
+
 		$rules = array('my_field' => $uncompressed);
 		$form = new Form($rules);
-
 		$this->assertEquals($rules, $form->getRules());
 		$this->assertEquals($rules['my_field'], $form->getRules('my_field'));
 		$this->assertEquals(array(), $form->getRules('unset_field'));
@@ -219,86 +225,165 @@ class FormTest extends PHPUnit_Framework_TestCase
 		$this->assertTrue($form->hasRules('name'));
 	}
 
-	public function forms()
+// VALUES TESTS
+
+	public function testGetSetValues()
 	{
-		// return form rules, valid data set and invalid data set
-		return array(
-			array(
-				// form
-				array(
-					'data' => new Form(array(
-						'first_name' => array('required'),
-						'last_name' => array('required')
-					))
-				),
-				// valid data set
-				array(
-					array('data' => array('first_name' => 'John', 'last_name' => 'Wayne'))
-				),
-				// invalid data set
-				array(
-					array('data' => array()),
-					array('data' => array('last_name' => 'Wayne')),
-					array('data' => array('first_name' => '', 'last_name' => 'Wayne'))
-				)
-			)
+		$values = array(
+			'first_name' => 'John'
 		);
-	}
 
-	/**
-	 * @dataProvider forms
-	 */
-	public function testConstruct($form)
-	{
-		new Form($form); // should not throw an exception
-	}
-
-	/**
-	 * @depends testSetRules
-	 * @dataProvider forms
-	 */
-	public function testValidates($form, $valid_values, $invalid_values)
-	{
-		$form = new Form($form);
-		foreach ( $valid_values as $values ) {
-			$this->assertTrue($form->validates($values));
+		$form = new Form();
+		$form->setValues($values);
+		$this->assertEquals($values, $form->getValues());
+		foreach ( $values as $field => $value ) {
+			$this->assertEquals($value, $form->getValue($field));
+			$this->assertEquals($value, $form->$field);
+			$this->assertEquals($value, $form[$field]);
 		}
-		foreach ( $invalid_values as $values ) {
-			$this->assertFalse($form->validates($values));
+
+		$form = new Form();
+		foreach ( $values as $field => $value ) {
+			$form->$field = $value;
+			$this->assertEquals($value, $form->getValue($field));
+		}
+
+		$form = new Form();
+		foreach ( $values as $field => $value ) {
+			$form[$field] = $value;
+			$this->assertEquals($value, $form->getValue($field));
 		}
 	}
 
-	// public function testSubForm()
-	// {
-	// 	$data = array(
-	// 		'id' => 42,
-	// 		'data' => array(
-	// 			'first_name' => 'Bruce',
-	// 			'last_name' => 'Wayne'
-	// 		)
-	// 	);
+	/**
+	 * @dataProvider invalidArguments
+	 * @expectedException InvalidArgumentException
+	 */
+	public function testGetValueArguments($argument)
+	{
+		$form = new Form();
+		$form->getValue($argument);
+	}
 
+// ERRORS TESTS
+
+	public function testGetSetErrors()
+	{
+		$form = new Form();
+		$this->assertEquals(array(), $form->getErrors());
+		$this->assertEquals(array(), $form->getErrors('Some field'));
+
+		$errors = array('first_name' => array('required' => true));
+		$form->setErrors($errors);
+		$this->assertEquals($errors, $form->getErrors());
+		$this->assertEquals($errors['first_name'], $form->getErrors('first_name'));
+	}
+
+	/**
+	 * @dataProvider invalidArguments
+	 * @expectedException InvalidArgumentException
+	 */
+	public function testGetErrorsInvalidArguments($argument)
+	{
+		// this is valid
+		if ( $argument === '' ) {
+			throw new InvalidArgumentException();
+		}
+		$form = new Form();
+		$form->getErrors($argument);
+	}
+
+	/**
+	 * @depends testGetSetErrors
+	 */
+	public function testHasErrors()
+	{
+		$form = new Form();
+		$this->assertFalse($form->hasErrors());
+		$this->assertFalse($form->hasErrors('first_name'));
+
+		$form->setErrors(array('first_name' => array('required')));
+		$this->assertTrue($form->hasErrors());
+		$this->assertTrue($form->hasErrors('first_name'));
+	}
+
+// VALIDATION TESTS
+
+	public function testForm()
+	{
+
+	}
+	public function testSubForm()
+	{
+		$form = new Form(array(
+			'subform' => new Form(array(
+				'first_name' => array('required'),
+				'last_name' => array('required')
+			))
+		));
+
+		// valid data sets
+		$expected_values = array('subform' => array('first_name' => 'John', 'last_name' => 'Wayne'));
+		$this->assertTrue($form->validates(array('subform' => array('first_name' => 'John', 'last_name' => 'Wayne'))));
+		$this->assertEquals($expected_values, $form->getValues());
+
+		$this->assertTrue($form->validates(array('subform' => array('first_name' => 'John', 'last_name' => 'Wayne', 'garbage' => 'garbage'))));
+		$this->assertEquals($expected_values, $form->getValues());
+
+		// invalid data sets
+		$this->assertFalse($form->validates(array()));
+		$this->assertFalse($form->validates(array('subform' => array())));
+		$this->assertFalse($form->validates(array('subform' => array('last_name' => 'Wayne'))));
+		$this->assertFalse($form->validates(array('subform' => array('first_name' => '', 'last_name' => 'Wayne'))));
+	}
+
+	public function testEach()
+	{
+		$form = new Form(array(
+			'list' => array('each' => array(
+				'max_length' => 4
+			))
+		));
+
+		$this->assertTrue($form->validates(array('list' => array('a','b','c'))));
+		$this->assertEquals(array('list' => array('a','b','c')), $form->getValues());
+
+		$this->assertTrue($form->validates(array('garbage' => 'garbage')));
+		$this->assertEquals(array('list' => array()), $form->getValues());
+
+		$this->assertFalse($form->validates(array('list' => 'garbage')));
+	}
+
+	// public function testPhpNative()
+	// {
 	// 	$form = new Form(array(
-	// 		'id' => array(),
-	// 		'data' => new Form(array(
-	// 			'first_name' => array(),
-	// 			'last_name' => array()
-	// 		))
+	// 		'field' => array('php' => 'is_int')
 	// 	));
-	// 	$this->assertTrue($form->validates($data));
+
+	// 	$this->assertTrue($form->validates(array('field' => 42)));
 	// }
 
-	// public function testArray()
+	// public function testRequired()
 	// {
-	// 	$data = array(
-	// 		'names' => array('John', 'Jack', 'Joe')
-	// 	);
 
-	// 	$form = new Form(array(
-	// 		'names' => array('each' => array(
-	// 			'max_length' => 4
-	// 		))
-	// 	));
-	// 	$this->assertTrue($form->validates($data));
 	// }
+
+	public function testCallback()
+	{
+		$callback = create_function('&$value,$form', '$value = 42; $form->proof = "it worked!"; return true;');
+		// $callback = function(&$value, $form) {
+		// 	$value = 42;
+		// 	return true;
+		// };
+
+		$form = new Form(array(
+			'field' => array('callback' => $callback)
+		));
+		// $this->assertTrue($form->validates(array()));
+		// $this->assertEquals(array('field' => 42), $form->getValues(), 'Callback can set value');
+
+		$this->assertTrue($form->validates(array('field' => 1)));
+		$this->assertEquals(42, $form->getValue('field'), 'Callback can modify value');
+		$this->assertEquals("it worked!", $form->getValue('proof'), 'Callback has access to form object');
+	}
 }
