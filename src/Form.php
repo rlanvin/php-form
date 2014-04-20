@@ -13,82 +13,236 @@
  */
 class Form
 {
-	protected $default_values = array();
+	const EACH = 'each';
+
+	/** 
+	 * The values as assoc (possibly recursive) array.
+	 * [field_name => field_value]
+	 * @var array
+	 */
 	protected $values = array();
 
+	/**
+	 * The rules as a big assoc (possibly recursive) array.
+	 * [
+	 *   field_name => [
+	 *     rule_name => rule_option
+	 *     ....
+	 *   ]
+	 * ]
+	 * @var array
+	 */
 	protected $rules = array();
+
+	/**
+	 * The validation errors as an array
+	 * [
+	 *   field_name => [
+	 *     rule_name => rule_value
+	 *     ...
+	 *   ]
+	 * ]
+	 * @var array
+	 */
 	protected $errors = array();
 
+	/**
+	 * Constructor
+	 *
+	 * @param $rules array The form definition, an assoc array of field_name => rules
+	 */
 	public function __construct($rules = array(), $default_values = array())
 	{
-		$this->default_values = $default_values;
 		$this->values = $default_values;
 
 		$this->setRules($rules);
 	}
 
+// RULES
+
 	/**
+	 * Set the rules of the form.
+	 *
+	 * @param $rules array
 	 * @return $this
 	 */
-	public function setRules($rules)
+	public function setRules($field_or_rules, array $rules = array())
 	{
-		$this->rules = self::parseRules($rules);
-		return $this;
+		// set the rules for one particular field
+		if ( is_string($field_or_rules) ) {
+			if ( ! $field_or_rules ) {
+				throw new InvalidArgumentException("Field name cannot be empty");
+			}
+			$this->rules[$field_or_rules] = self::expandRulesArray($rules);
+			return $this;
+		}
+
+		// set the rules of the form
+		if ( is_array($field_or_rules) ) {
+			$this->rules = self::parseRules($field_or_rules);
+			return $this;
+		}
+
+		throw new InvalidArgumentException("Unsupported parameter type");
 	}
 
-	public function getRules()
+	/**
+	 * Add rules to existing form.
+	 * Rules will be merged to existing rules.
+	 *
+	 * @param $rules array
+	 * @return $this
+	 */
+	public function addRules(array $rules)
 	{
-		return $this->rules;
-	}
-
-	public function hasRule($field_name)
-	{
-		return isset($this->rules[$field_name]);
-	}
-
-	public function setRule($field_name, $rules)
-	{
-		$this->rules[$field_name] = self::parseRules(array($field_name => $rules));
-	}
-
-	public function addRules($rules)
-	{
-		$this->rules = array_merge($this->rules, self::parseRules($rules));
+		$this->rules = array_merge_recursive($this->rules, self::parseRules($rules));
 		return $this;
 	}
 
 	/**
-	 * Returns if a field is required
+	 * Return the rules array of this form or of a single field.
+	 *
+	 * If the field is not set in the rules array, it'll return empty array.
+	 * 
+	 * @return array|Form
+	 */
+	public function getRules($field = '')
+	{
+		if ( ! is_string($field) ) {
+			throw new InvalidArgumentException("Field name must be a string");
+		}
+
+		if ( ! $field ) {
+			return $this->rules;
+		}
+
+		if ( ! isset($this->rules[$field]) ) {
+			return array();
+		}
+
+		return $this->rules[$field];
+	}
+
+	/**
+	 * Return true if the given field name as rules associated
+	 *
+	 * @param $field string
+	 * @return true
+	 */
+	public function hasRules($field)
+	{
+		if ( ! is_string($field) ) {
+			throw new InvalidArgumentException("Field name must be a string");
+		}
+		if ( ! $field ) {
+			throw new InvalidArgumentException("Field name cannot be empty");
+		}
+
+		return isset($this->rules[$field]) && ! empty($this->rules[$field]);
+	}
+
+	/**
+	 * Return the value of a given rule for a given field or null if the rule
+	 * or the field is not set in this form.
+	 * 
+	 * @param $field string
+	 * @param $rule_name string
+	 * @return mixed
+	 */
+	public function getRuleValue($field, $rule_name)
+	{
+		if ( ! $field ) {
+			throw new InvalidArgumentException("Field name cannot be empty");
+		}
+
+		$rules = $this->getRules($field);
+
+		if ( ! is_string($rule_name) ) {
+			throw new InvalidArgumentException("Rule name must a string");
+		}
+
+		if ( ! $rule_name ) {
+			throw new InvalidArgumentException("Rule name cannot be empty");
+		}
+
+		if ( ! array_key_exists($rule_name, $rules) ) {
+			return null;
+		}
+
+		return $rules[$rule_name];
+	}
+
+	/**
+	 * Returns true if a field is required.
+	 * Shortcut for $this->getRuleValue($field, 'required');
+	 *
+	 * @return bool
 	 */
 	public function isRequired($field)
 	{
-		return isset($this->rules[$field]) && isset($this->rules[$field]['required']) && $this->rules[$field]['required'];
+		return !! $this->getRuleValue($field, 'required');
 	}
 
 	/**
-	 * Makes sure the array is properly formatted.
-	 * For example ['required', 'min_length' => 2] becomes ['required' => true, 'min_length' => 2]
-	 * This is just a small method so we can use shorter syntax in the code.
+	 * Check a rules array.
+	 *
+	 * @param $rules array
 	 * @return array
 	 */
-	static public function parseRules($rules)
+	public static function parseRules(array $rules)
 	{
 		foreach ( $rules as $field => & $field_rules ) {
-			$field_rules = self::arrayFlip($field_rules);
+			if ( ! is_string($field) ) {
+				throw new InvalidArgumentException(sprintf("Field name must be a string (%s given)", gettype($field)));
+			}
+
+			if ( is_array($field_rules) ) {
+				$field_rules = self::expandRulesArray($field_rules);
+			} elseif ( $field_rules instanceof self ) {
+				// do nothing
+			} else {
+				throw new InvalidArgumentException("Invalid rules for field $field, must be array or ".__CLASS__);
+			}
 		}
 		return $rules;
 	}
-	static public function arrayFlip($array)
+
+	/**
+	 * Makes sure the rules array is properly formatted, i.e. with the rule
+	 * name as key.
+	 *
+	 * This is just a small method so we can use shorter syntax in the code.
+	 *
+	 * For example:
+	 *   ['required', 'min_length' => 2]
+	 * becomes
+	 *   ['required' => true, 'min_length' => 2]
+	 *
+	 * @param $array array
+	 * @return array
+	 */
+	public static function expandRulesArray(array $array)
 	{
 		$new_array = array();
 		foreach ( $array as $key => $param ) {
-			if ( is_integer($key) ) {
+			// the validator has been written as array value
+			if ( is_int($key) ) {
+				if ( ! is_string($param) ) {
+					throw new InvalidArgumentException("Rule name must be a string");
+				}
+				if ( ! $param ) {
+					throw new InvalidArgumentException("Rule name cannot be empty");
+				}
 				$new_array[$param] = true;
 			}
-			// these special keys have nested rules
-			elseif ( $key == 'sanitize' || $key == 'multiple' ) {
-				$new_array[$key] = self::arrayFlip($param);
+			elseif ( $key == '' ) {
+				throw new InvalidArgumentException("Rule name cannot be empty");
 			}
+			elseif ( $key == self::EACH ) {
+				// these special keys have nested rules
+				$new_array[$key] = self::expandRulesArray($param);
+			}
+			// nothing to flip
 			else {
 				$new_array[$key] = $param;
 			}
@@ -96,13 +250,7 @@ class Form
 		return $new_array;
 	}
 
-	public function getRuleParam($field, $validator)
-	{
-		if ( array_key_exists($field, $this->rules) && array_key_exists($validator, $this->rules[$field]) ) {
-			return $this->rules[$field][$validator];
-		}
-		return null;
-	}
+// VALUES
 
 	public function getValues()
 	{
@@ -186,70 +334,59 @@ class Form
 
 //@}
 
+	public function validate($values = array(), array $opt = array())
+	{
+		return $this->validates($values, $opt);
+	}
+
 	/**
 	 * The values that are not in $rules array will be ignored (and not saved in the class).
 	 * @return bool
 	 */
-	public function validate($values = array(), array $opt = array())
+	public function validates($values = array(), array $opt = array())
 	{
 		$opt = array_merge(array(
 			'rules' => $this->rules,
 			'use_default_if_missing' => false
 		), $opt);
 
-		// foreach "field_name" => $rules
-		foreach ( $opt['rules'] as $key => $rules ) {
+		foreach ( $opt['rules'] as $field => $rules ) {
 			$value = null;
+
 			// use provided value if exists
-			if ( array_key_exists($key, $values) ) {
-				$value = $values[$key];
+			if ( array_key_exists($field, $values) ) {
+				$value = $values[$field];
 			}
 			// otherwise, use default
-			elseif ( $opt['use_default_if_missing'] && array_key_exists($key, $this->values) ) {
-				$value = $this->values[$key];
+			elseif ( $opt['use_default_if_missing'] && array_key_exists($field, $this->values) ) {
+				$value = $this->values[$field];
 			}
 
-			// first we sanitize the value
-			// if ( array_key_exists('sanitize', $rules) ) {
-			// 	$value = $this->sanitizeValue($value, $rules["sanitize"]);
-			// 	unset($rules['sanitize']);
-			// }
+			if ( $rules instanceof self ) {
+				$rules->validates($value, array(
+					'use_default_if_missing' => $opt['use_default_if_missing']
+				));
+				$errors = $rules->getErrors();
+			}
+			else {
+				$errors = $this->validateValue($value, $rules, $opt);
+			}
 
-			$errors = $this->validateValue($value, $rules, $opt);
 			if ( $errors !== true ) {
-				$this->errors[$key] = $errors;
+				$this->errors[$field] = $errors;
 			}
 
 			// merge with the $values array of the class for later use (e.g. repopulate the form)
-			$this->values[$key] = $value;
+			$this->values[$field] = $value;
 		}
+
 		return empty($this->errors);
 	}
-
-	// public function sanitizeValue($value, $rules, array $opt = array())
-	// {
-	// 	foreach ( $rules as $sanitizer => $param ) {
-
-	// 		// Sanitizer function (in Sanitizer class)
-	// 		if ( method_exists('Sanitizer', $sanitizer) ) {
-	// 			$value = call_user_func_array(array('Sanitizer', $sanitizer), array($value, $param));
-	// 		}
-	// 		// callback function (custom sanitizer)
-	// 		elseif ( is_callable($param) ) {
-	// 			$value = call_user_func_array($param, array($value, $this));
-	// 		}
-	// 		else {
-	// 			throw new InvalidArgumentException("Sanitizer $sanitizer not found");
-	// 		}
-	// 	}
-
-	// 	return $value;
-	// }
 
 	/**
 	 * Validates one single value ($value) against a set of rules ($rules)
 	 */
-	public function validateValue(&$value, $rules, array $opt = array())
+	public function validateValue(& $value, array $rules, array $opt = array())
 	{
 		$opt = array_merge(array(
 			'stop_on_error' => true
@@ -268,7 +405,7 @@ class Form
 			}
 			else {
 				// cast to an array if necessasry
-				if ( isset($rules['multiple']) ) {
+				if ( isset($rules[self::EACH]) ) {
 					$value = array();
 				}
 				return true;
@@ -280,11 +417,10 @@ class Form
 			$ret = true;
 
 			// special iterative & recursive validator for arrays
-			if ( $validator === 'multiple' ) {
+			if ( $validator === self::EACH ) {
 				$ret = $this->validateMultipleValues($value, $param, $errors);
 			}
 			else {
-				
 				// validator function (in Validator class)
 				if ( method_exists('Validator', $validator) ) {
 					$ret = call_user_func_array(array('Validator', $validator), array(&$value, $param));
@@ -307,6 +443,7 @@ class Form
 				}
 			}
 		}
+
 		return empty($errors) ? true : $errors;
 	}
 
@@ -320,7 +457,7 @@ class Form
 		if ( ! is_array($values) ) {
 			return false;
 		}
-		
+
 		foreach ( $values as &$value ) {
 			$ret = $this->validateValue($value, $rules);
 			if ( $ret !== true ) {
