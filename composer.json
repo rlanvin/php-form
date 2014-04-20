@@ -1,0 +1,14 @@
+{
+    "name": "rlanvin/php-form",
+    "type": "library",
+    "description": "Lightweight form validation library for PHP",
+    "keywords": ["form","validation"],
+    "homepage": "https://github.com/rlanvin/php-form",
+    "license": "MIT",
+    "require": {
+        "php": ">=5.3.0"
+    },
+    "autoload": {
+        "classmap": ["src/"]
+    }
+}
