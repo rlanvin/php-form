@@ -324,17 +324,17 @@ class FormTest extends PHPUnit_Framework_TestCase
 
 		// valid data sets
 		$expected_values = array('subform' => array('first_name' => 'John', 'last_name' => 'Wayne'));
-		$this->assertTrue($form->validates(array('subform' => array('first_name' => 'John', 'last_name' => 'Wayne'))));
+		$this->assertTrue($form->validate(array('subform' => array('first_name' => 'John', 'last_name' => 'Wayne'))));
 		$this->assertEquals($expected_values, $form->getValues());
 
-		$this->assertTrue($form->validates(array('subform' => array('first_name' => 'John', 'last_name' => 'Wayne', 'garbage' => 'garbage'))));
+		$this->assertTrue($form->validate(array('subform' => array('first_name' => 'John', 'last_name' => 'Wayne', 'garbage' => 'garbage'))));
 		$this->assertEquals($expected_values, $form->getValues());
 
 		// invalid data sets
-		$this->assertFalse($form->validates(array()));
-		$this->assertFalse($form->validates(array('subform' => array())));
-		$this->assertFalse($form->validates(array('subform' => array('last_name' => 'Wayne'))));
-		$this->assertFalse($form->validates(array('subform' => array('first_name' => '', 'last_name' => 'Wayne'))));
+		$this->assertFalse($form->validate(array()));
+		$this->assertFalse($form->validate(array('subform' => array())));
+		$this->assertFalse($form->validate(array('subform' => array('last_name' => 'Wayne'))));
+		$this->assertFalse($form->validate(array('subform' => array('first_name' => '', 'last_name' => 'Wayne'))));
 	}
 
 	public function testEach()
@@ -345,13 +345,13 @@ class FormTest extends PHPUnit_Framework_TestCase
 			))
 		));
 
-		$this->assertTrue($form->validates(array('list' => array('a','b','c'))));
+		$this->assertTrue($form->validate(array('list' => array('a','b','c'))));
 		$this->assertEquals(array('list' => array('a','b','c')), $form->getValues());
 
-		$this->assertTrue($form->validates(array('garbage' => 'garbage')));
+		$this->assertTrue($form->validate(array('garbage' => 'garbage')));
 		$this->assertEquals(array('list' => array()), $form->getValues());
 
-		$this->assertFalse($form->validates(array('list' => 'garbage')));
+		$this->assertFalse($form->validate(array('list' => 'garbage')));
 	}
 
 	// public function testPhpNative()
@@ -360,7 +360,7 @@ class FormTest extends PHPUnit_Framework_TestCase
 	// 		'field' => array('php' => 'is_int')
 	// 	));
 
-	// 	$this->assertTrue($form->validates(array('field' => 42)));
+	// 	$this->assertTrue($form->validate(array('field' => 42)));
 	// }
 
 	// public function testRequired()
@@ -379,10 +379,10 @@ class FormTest extends PHPUnit_Framework_TestCase
 		$form = new Form(array(
 			'field' => array('callback' => $callback)
 		));
-		// $this->assertTrue($form->validates(array()));
+		// $this->assertTrue($form->validate(array()));
 		// $this->assertEquals(array('field' => 42), $form->getValues(), 'Callback can set value');
 
-		$this->assertTrue($form->validates(array('field' => 1)));
+		$this->assertTrue($form->validate(array('field' => 1)));
 		$this->assertEquals(42, $form->getValue('field'), 'Callback can modify value');
 		$this->assertEquals("it worked!", $form->getValue('proof'), 'Callback has access to form object');
 	}

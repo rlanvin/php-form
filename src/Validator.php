@@ -10,7 +10,7 @@
  */
 
 /**
- * Static class Validator (could be a namespace)
+ * Static class Validator (could be just functions inside a namespace)
  *
  * Each validator is a method that returns a boolean indicating whether the
  * value provided is valid (true) or invalid (false).
@@ -19,39 +19,22 @@
  * 
  * Validators can take one additional parameter. To pass the parameter is the
  * Form context, use the following syntax:
- * array('trim'); // no option
- * array('trim' => '/'); // will trim "/"
+ * ['trim']; // no option
+ * ['trim' => '/']; // will trim "/"
+ *
  */
 class Validator
 {
-	static public function trim(&$value, $charlist)
+	/** 
+	 * Check that the input is a valid date.
+	 * @see http://www.php.net/strtotime
+	 */
+	static public function date($value)
 	{
-		// trim will trigger an error if called with something else than a string
-		if ( ! is_string($value) || is_int($value) ) {
+		if ( ! is_string($value) ) {
 			return false;
 		}
-
-		if ( $charlist === true ) {
-			$charlist = " \t\n\r\0\x0B";
-		}
-
-		$value = trim($value, $charlist);
-		return true;
-	}
-
-	static public function regexp($value, $regexp)
-	{
-		return !! preg_match($regexp, $value);
-	}
-
-	static public function max_length($value, $param)
-	{
-		return strlen($value) <= $param;
-	}
-
-	static public function min_length($value, $param)
-	{
-		return strlen($value) >= $param;
+		return strtotime($value) !== false;
 	}
 
 	/**
@@ -59,16 +42,127 @@ class Validator
 	 */
 	static public function email($value)
 	{
-		return filter_var($value, FILTER_VALIDATE_EMAIL);
+		return !! filter_var($value, FILTER_VALIDATE_EMAIL);
 	}
 
-	/** 
-	 * Check that the input is a valid date.
+	/**
+	 * Check that the value is in the param array
+	 * If value is an array, it'll compute array diff.
 	 */
-	static public function date($value)
+	static public function in($value, array $param)
 	{
-		return strtotime($value) !== false;
+		if ( is_array($value) ) {
+			$ret = array_diff($value, $param);
+			return empty($ret);
+		}
+
+		return in_array($value, $param);
 	}
+	/**
+	 * Check that value is a key of the param array.
+	 * If value is an array, it'll compute array diff.
+	 */
+	static public function in_keys($value, array $param)
+	{
+		if ( is_array($value) ) {
+			$ret = array_diff($value, array_keys($param));
+			return empty($ret);
+		}
+		
+		if ( ! is_string($value) && ! is_int($value) ) {
+			return false;
+		}
+
+		return array_key_exists($value, $param);
+	}
+
+	/**
+	 * Check that the value is a maximum length
+	 */
+	static public function max_length($value, $length)
+	{
+		if ( ! is_string($value) && ! is_int($value) ) {
+			return false;
+		}
+		if ( ! is_int($length) && ! ctype_digit($length)) {
+			throw new InvalidArgumentException('The length must be an integer');
+		}
+		return mb_strlen($value) <= $length;
+	}
+
+	/**
+	 * Check that the value is a minimum length
+	 */
+	static public function min_length($value, $length)
+	{
+		if ( ! is_string($value) && ! is_int($value) ) {
+			return false;
+		}
+		if ( ! is_int($length) && ! ctype_digit($length)) {
+			throw new InvalidArgumentException('The length must be an integer');
+		}
+		return mb_strlen($value) >= $length;
+	}
+
+	/**
+	 * Check the value against a regexp.
+	 *
+	 * @param $value mixed
+	 * @param $regexp string Regular expression
+	 * @return bool
+	 */
+	public static function regexp($value, $regexp)
+	{
+		if ( ! is_string($regexp) ) {
+			throw new InvalidArgumentException('The regular expression must be a string');
+		}
+		if ( ! $regexp ) {
+			throw new InvalidArgumentException('The regular expression cannot be empty');
+		}
+
+		return !! filter_var($value, FILTER_VALIDATE_REGEXP, array(
+			'options' => array('regexp' => $regexp)
+		));
+	}
+
+	/**
+	 * Validates the format: HH:MM
+	 */
+	static public function time($value)
+	{
+		if ( ! is_string($value) ) {
+			return false;
+		}
+
+		$h = substr($value, 0, 2);
+		$m = substr($value, 3, 2);
+
+		return ($value[2] == ':' && is_numeric($h) && $h < 24 && is_numeric($m) && $m < 60);
+	}
+
+	/**
+	 * Check that the value is a string and trim it of unwanted character.
+	 *
+	 * @param $value mixed
+	 * @param $character_mask string The list of characters to be trimmed.
+	 * @see http://www.php.net/trim
+	 * @return bool
+	 */
+	public static function trim(&$value, $character_mask = true)
+	{
+		// trim will trigger an error if called with something else than a string
+		if ( ! is_string($value) && ! is_int($value) ) {
+			return false;
+		}
+
+		if ( $character_mask === true ) {
+			$character_mask = " \t\n\r\0\x0B";
+		}
+
+		$value = trim($value, $character_mask);
+		return true;
+	}
+
 
 	// static public function date_max($value, $param)
 	// {
@@ -80,16 +174,6 @@ class Validator
 	// 	return strtotime($value) >= $param;
 	// }
 
-	/**
-	 * HH:MM
-	 */
-	static public function time($value)
-	{
-		$h = substr($value, 0, 2);
-		$m = substr($value, 3, 2);
-
-		return ($value[2] == ':' && is_numeric($h) && $h < 24 && is_numeric($m) && $m < 60);
-	}
 
 	static public function numeric($value)
 	{
@@ -106,32 +190,6 @@ class Validator
 		return $value >= $param;
 	}
 
-	static public function enum($value, $param)
-	{
-		if ( is_array($value) ) {
-			$ret = array_diff($value, $param);
-			$ret = empty($ret);
-		}
-		else {
-			$ret = in_array($value, $param);
-		}
-		return $ret;
-	}
-	/**
-	 * Check that $value is a key of $param.
-	 */
-	static public function enum_keys($value, $param)
-	{
-		if ( is_array($value) ) {
-			$ret = array_diff($value, array_keys($param));
-			$ret = empty($ret);
-		}
-		else {
-			$ret = array_key_exists($value, $param);
-		}
-
-		return $ret;
-	}
 
 	/**
 	 * Note: we return '0' or '1' as *string*.

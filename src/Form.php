@@ -26,7 +26,7 @@ class Form implements ArrayAccess
 	 * The rules as a big assoc (possibly recursive) array.
 	 * [
 	 *   field_name => [
-	 *     rule_name => rule_option
+	 *     rule_name => rule_value
 	 *     ....
 	 *   ]
 	 * ]
@@ -436,18 +436,18 @@ class Form implements ArrayAccess
 // VALIDATION
 
 	/**
-	 * @deprecated
+	 * @vee validate()
 	 */
-	public function validate($values = array(), array $opt = array())
+	public function validates($values = array(), array $opt = array())
 	{
-		return $this->validates($values, $opt);
+		return $this->validate($values, $opt);
 	}
 
 	/**
 	 * The values that are not in $rules array will be ignored (and not saved in the class).
 	 * @return bool
 	 */
-	public function validates(array $values, array $opt = array())
+	public function validate(array $values, array $opt = array())
 	{
 		$opt = array_merge(array(
 			'rules' => $this->rules,
@@ -544,8 +544,8 @@ class Form implements ArrayAccess
 					throw new InvalidArgumentException("Validator $validator not found");
 				}
 			}
-
 			// if the validator failed, we store the name of the validator in the $errors array
+			// XXX shoudln't it be if $ret !== true ?
 			if ( $ret === false ) {
 				$errors[$validator] = $param;
 				if ( $opt['stop_on_error'] ) {

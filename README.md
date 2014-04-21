@@ -1,10 +1,11 @@
 # PHP Form
 
-Lightweight form validation library form PHP
+Lightweight form validation library for PHP
 
 ## Requirements
 
 - PHP >= 5.3
+- mbstring extension (http://www.php.net/manual/en/book.mbstring.php)
 
 ## Documentation
 
