@@ -11,6 +11,35 @@ Lightweight form validation library for PHP
 
 ## Installation
 
+### Option 1
+
+- Download the files in [src/](https://github.com/rlanvin/php-form/tree/master/src)
+- (optional) Merge them into one
+- Put them in a folder that is autoloaded, or `inclure` or `require` them
+- Done
+
+### Option 2
+
+The recommended way is to install the lib [through Composer](http://getcomposer.org/).
+
+Just add this to your `composer.json` file:
+
+```JSON
+{
+    "require": {
+        "rlanvin/php-form": "dev/master"
+    }
+}
+```
+
+Then run `composer install` or `composer update`.
+
+Now you can use the autoloader, and you will have access to the library:
+
+```php
+<?php
+require 'vendor/autoload.php';
+```
 
 ## Documentation
 
