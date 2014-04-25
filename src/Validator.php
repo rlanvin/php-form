@@ -137,7 +137,7 @@ class Validator
 		$h = substr($value, 0, 2);
 		$m = substr($value, 3, 2);
 
-		return ($value[2] == ':' && is_numeric($h) && $h < 24 && is_numeric($m) && $m < 60);
+		return (isset($value[2]) && $value[2] == ':' && is_numeric($h) && $h < 24 && is_numeric($m) && $m < 60);
 	}
 
 	/**
