@@ -436,48 +436,42 @@ class Form implements ArrayAccess
 // VALIDATION
 
 	/**
-	 * @vee validate()
-	 */
-	public function validates($values = array(), array $opt = array())
-	{
-		return $this->validate($values, $opt);
-	}
-
-	/**
 	 * The values that are not in $rules array will be ignored (and not saved in the class).
 	 * @return bool
 	 */
 	public function validate(array $values, array $opt = array())
 	{
 		$opt = array_merge(array(
-			'rules' => $this->rules,
-			'use_default_if_missing' => false
+			'use_default' => true
 		), $opt);
 
-		foreach ( $opt['rules'] as $field => $rules ) {
+		// reset errors
+		$this->errors = array();
+
+		foreach ( $this->rules as $field => $rules ) {
 			$value = null;
 
 			// use provided value if exists
 			if ( array_key_exists($field, $values) ) {
 				$value = $values[$field];
 			}
-			// otherwise, use default
-			elseif ( $opt['use_default_if_missing'] && array_key_exists($field, $this->values) ) {
+			// otherwise, use default if exists
+			elseif ( $opt['use_default'] && array_key_exists($field, $this->values) ) {
 				$value = $this->values[$field];
 			}
 
+			// subform
 			if ( $rules instanceof self ) {
 				if ( ! is_array($value) ) {
-					$value = array($value);
+					$value = array();
 				}
-				$errors = $rules->validates($value, array(
-					'use_default_if_missing' => $opt['use_default_if_missing']
-				));
+				$errors = $rules->validate($value, $opt);
 				$value = $rules->getValues();
 				if ( $errors !== true ) {
 					$errors = $rules->getErrors();
 				}
 			}
+			// normal rules array
 			else {
 				$errors = $this->validateValue($value, $rules, $opt);
 			}
