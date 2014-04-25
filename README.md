@@ -4,6 +4,26 @@ Lightweight form validation library for PHP
 
 [![Build Status](https://travis-ci.org/rlanvin/php-form.svg?branch=master)](https://travis-ci.org/rlanvin/php-form)
 
+## Basic example
+
+```php
+// create the form with rules
+$form = new Form([
+    'name' => ['required', 'trim', max_length' => 255],
+    'email' => ['required', 'email']
+]);
+
+if ( $form->validates($_POST) ) {
+    // $_POST data is valid
+    save_to_db_or_something($form->getValues());
+}
+else {
+   // $_POST data is not valid
+   display_errors_or_something($form->getErrors());
+   // $form->getValues() can be used to repopulate the form
+}
+```
+
 ## Requirements
 
 - PHP >= 5.3
