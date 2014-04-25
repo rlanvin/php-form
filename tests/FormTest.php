@@ -361,8 +361,8 @@ class FormTest extends PHPUnit_Framework_TestCase
 		$this->assertFalse($form->validate(array(), array('use_default' => false)), 'Use default is missing disabled');
 
 		// default value not matching rules
-		$form = new Form(['name' => ['required', 'min_length' => 2]]);
-		$form->setValues(['name' => 'A']);
+		$form = new Form(array('name' => array('required', 'min_length' => 2)));
+		$form->setValues(array('name' => 'A'));
 		$this->assertFalse($form->validate(array())); // false, the default value for name doesn't match 'min_length'
 	}
 
