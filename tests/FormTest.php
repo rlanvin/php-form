@@ -314,7 +314,7 @@ class FormTest extends PHPUnit_Framework_TestCase
 
 	}
 
-	public function testRequired()
+	public function testUseDefault()
 	{
 		// not required
 		$form = new Form(array(
@@ -358,7 +358,29 @@ class FormTest extends PHPUnit_Framework_TestCase
 			'id' => array('required')
 		));
 		$form->setValues(array('id' => 1));
-		$this->assertFalse($form->validate(array(), array('use_default' => false)), 'Strict required works');
+		$this->assertFalse($form->validate(array(), array('use_default' => false)), 'Use default is missing disabled');
+
+		// default value not matching rules
+		$form = new Form(['name' => ['required', 'min_length' => 2]]);
+		$form->setValues(['name' => 'A']);
+		$this->assertFalse($form->validate(array())); // false, the default value for name doesn't match 'min_length'
+	}
+
+	public function testAllowEmpty()
+	{
+		$test_rules = array(
+			array('min_length' => 2),
+			array('each' => array('min_length' => 2)),
+			array('date'),
+			array('time'),
+		);
+		foreach ( $test_rules as $rules ) {
+			$form = new Form(array(
+				'id' => $rules
+			));
+			$this->assertTrue($form->validate(array('id' => '')), 'Empty value allowed by default');
+			$this->assertFalse($form->validate(array('id' => ''), array('allow_empty' => false)), 'Empty value not allowed by default, runned through rules');
+		}
 	}
 
 	public function testSubForm()
@@ -466,4 +488,33 @@ class FormTest extends PHPUnit_Framework_TestCase
 		$this->assertTrue($form->validate(array('id' => null)));
 		$this->assertEquals(null, $form->id);
 	}
+
+	// public function values()
+	// {
+	// 	return array(
+	// 		array(''),
+	// 		array(1),
+	// 		array(false),
+	// 		array(true),
+	// 		array(0),
+	// 		array(0.5),
+	// 		array('1'),
+	// 		array('abc'),
+	// 		array(array()),
+	// 		array(new stdClass()),
+	// 	);
+	// }
+	// /**
+	//  * @dataProvider values
+	//  */
+	// public function testValidate($data)
+	// {
+	// 	$form = new Form(array(
+	// 		'f' => array('each' => array())
+	// 	));
+
+	// 	var_dump($form->validate(array('f' => $data)));
+	// 	var_dump('value=',$form->f);
+	// 	$this->assertTrue(is_array($form->f), gettype($data)." has been casted to array");
+	// }
 }

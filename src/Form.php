@@ -442,7 +442,9 @@ class Form implements ArrayAccess
 	public function validate(array $values, array $opt = array())
 	{
 		$opt = array_merge(array(
-			'use_default' => true
+			'use_default' => true,
+			'stop_on_error' => true,
+			'allow_empty' => true
 		), $opt);
 
 		// reset errors
@@ -493,7 +495,8 @@ class Form implements ArrayAccess
 	public function validateValue(& $value, array $rules, array $opt = array())
 	{
 		$opt = array_merge(array(
-			'stop_on_error' => true
+			'stop_on_error' => true,
+			'allow_empty' => true
 		), $opt);
 
 		$errors = array();
@@ -507,7 +510,7 @@ class Form implements ArrayAccess
 					return $errors;
 				}
 			}
-			else {
+			elseif ( $opt['allow_empty'] ) {
 				// cast to an array if necessasry
 				if ( isset($rules[self::EACH]) ) {
 					$value = array();
@@ -520,7 +523,7 @@ class Form implements ArrayAccess
 		foreach ( $rules as $validator => $param ) {
 			$ret = true;
 
-			// special iterative & recursive validator for arrays
+			// special iterative validator for arrays
 			if ( $validator === self::EACH ) {
 				$ret = $this->validateMultipleValues($value, $param, $errors);
 			}
@@ -569,6 +572,8 @@ class Form implements ArrayAccess
 			}
 		}
 
-		return true; // return true because $errors is already filled
+		// return true because $errors is already filled 
+		// we dont want validate() to fill it again
+		return true;
 	}
 }
