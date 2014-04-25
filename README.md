@@ -9,7 +9,7 @@ Lightweight form validation library for PHP
 ```php
 // create the form with rules
 $form = new Form([
-    'name' => ['required', 'trim', max_length' => 255],
+    'name' => ['required', 'trim', 'max_length' => 255],
     'email' => ['required', 'email']
 ]);
 
