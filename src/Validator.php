@@ -223,4 +223,9 @@ class Validator
 	{
 		return is_string($value);
 	}
+
+	static public function is_empty($value)
+	{
+		return $value === null || (is_array($value) && empty($value)) || (is_string($value) && trim($value) === '');
+	}
 }

@@ -503,8 +503,16 @@ class Form implements ArrayAccess
 
 		// check if value is required.
 		// if the value is NOT required and NOT present, we do no run any other validator
-		if ( $value === null || (is_array($value) && empty($value)) || (is_string($value) && trim($value) === '') ) {
-			if ( isset($rules['required']) && $rules['required'] === true ) {
+		if ( Validator::is_empty($value) ) {
+			$required = false;
+			if ( isset($rules['required']) ) {
+				$required = $rules['required'];
+				if ( is_callable($required) ) {
+					$required = call_user_func_array($required, array($this));
+				}
+			}
+
+			if ( $required ) {
 				$errors['required'] = true;
 				if ( $opt['stop_on_error'] ) {
 					return $errors;
@@ -530,6 +538,9 @@ class Form implements ArrayAccess
 			else {
 				// validator function (in Validator class)
 				if ( method_exists('Validator', $validator) ) {
+					if ( is_callable($param) ) {
+						$param = call_user_func_array($param, array($this));
+					}
 					$ret = call_user_func_array(array('Validator', $validator), array(&$value, $param));
 				}
 				// callback function (custom validator)

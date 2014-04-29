@@ -427,14 +427,27 @@ class FormTest extends PHPUnit_Framework_TestCase
 		$this->assertFalse($form->validate(array('list' => 'garbage')));
 	}
 
-	// public function testPhpNative()
-	// {
-	// 	$form = new Form(array(
-	// 		'field' => array('php' => 'is_int')
-	// 	));
+	public function testConditionalValue()
+	{
+		$form = new Form(array(
+			'field' => array('required' => create_function('$form', 'return true;'))
+		));
 
-	// 	$this->assertTrue($form->validate(array('field' => 42)));
-	// }
+		$this->assertTrue($form->validate(array('field' => 42)), 'Required evaluates to true');
+		$form->setValues(array());
+		$this->assertFalse($form->validate(array()), 'Required evaluates to true');
+		$this->assertFalse($form->validate(array('field' => '')), 'Required evaluates to true');
+
+		$form = new Form(array(
+			'field' => array('required' => create_function('$form', 'return false;'))
+		));
+
+		$this->assertTrue($form->validate(array('field' => 42)), 'Required evaluates to false');
+		$form->setValues(array());
+		$this->assertTrue($form->validate(array()), 'Required evaluates to false');
+		$form->setValues(array());
+		$this->assertTrue($form->validate(array('field' => '')), 'Required evaluates to false');
+	}
 
 	// public function testRequired()
 	// {
@@ -458,6 +471,30 @@ class FormTest extends PHPUnit_Framework_TestCase
 		$this->assertTrue($form->validate(array('field' => 1)));
 		$this->assertEquals(42, $form->getValue('field'), 'Callback can modify value');
 		$this->assertEquals("it worked!", $form->getValue('proof'), 'Callback has access to form object');
+
+		$identical_password_validator = function($confirmation, $form) {
+			return $form->password == $confirmation;
+		};
+
+		$form = new Form(array(
+			'password' => array('required', 'min_length' => 6),
+			'password_confirm' => array('required', 'identical' => $identical_password_validator)
+		));
+
+		$this->assertTrue($form->validate(array('password' => 'abcdef', 'password_confirm' => 'abcdef')));
+		$this->assertFalse($form->validate(array('password' => 'abcdef', 'password_confirm' => '')));
+		$this->assertFalse($form->validate(array('password' => 'abcdef', 'password_confirm' => 'x')));
+
+
+		// order is important!
+		$form = new Form(array(
+			'password_confirm' => array('required', 'identical' => $identical_password_validator),
+			'password' => array('required', 'min_length' => 6)
+		));
+
+		$this->assertFalse($form->validate(array('password' => 'abcdef', 'password_confirm' => 'abcdef')));
+		$this->assertFalse($form->validate(array('password' => 'abcdef', 'password_confirm' => '')));
+		$this->assertFalse($form->validate(array('password' => 'abcdef', 'password_confirm' => 'x')));
 	}
 
 	/**
