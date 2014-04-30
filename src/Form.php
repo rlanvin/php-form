@@ -485,6 +485,8 @@ class Form implements ArrayAccess
 				if ( ! is_array($value) ) {
 					$value = array();
 				}
+				// pass values to the subform (so it can uses default values)
+				$rules->setValues($this->getValue($field) ?: array());
 				$errors = $rules->validate($value, $opt);
 				$value = $rules->getValues();
 				if ( $errors !== true ) {

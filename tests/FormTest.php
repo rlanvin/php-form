@@ -451,6 +451,10 @@ class FormTest extends PHPUnit_Framework_TestCase
 		$this->assertFalse($form->validate(array('subform' => array())));
 		$this->assertFalse($form->validate(array('subform' => array('last_name' => 'Wayne'))));
 		$this->assertFalse($form->validate(array('subform' => array('first_name' => '', 'last_name' => 'Wayne'))));
+
+		// subform + allow empty (i.e test that values are passed to subform)
+		$form->setValues(array('subform' => array('first_name' => 'John')));
+		$this->assertTrue($form->validate(array('subform' => array('last_name' => 'Doe'))), 'Values are passed to subform');
 	}
 
 	public function testEach()
@@ -493,24 +497,13 @@ class FormTest extends PHPUnit_Framework_TestCase
 		$this->assertTrue($form->validate(array('field' => '')), 'Required evaluates to false');
 	}
 
-	// public function testRequired()
-	// {
-
-	// }
-
 	public function testCallback()
 	{
 		$callback = create_function('&$value,$form', '$value = 42; $form->proof = "it worked!"; return true;');
-		// $callback = function(&$value, $form) {
-		// 	$value = 42;
-		// 	return true;
-		// };
 
 		$form = new Form(array(
 			'field' => array('callback' => $callback)
 		));
-		// $this->assertTrue($form->validate(array()));
-		// $this->assertEquals(array('field' => 42), $form->getValues(), 'Callback can set value');
 
 		$this->assertTrue($form->validate(array('field' => 1)));
 		$this->assertEquals(42, $form->getValue('field'), 'Callback can modify value');
@@ -569,33 +562,4 @@ class FormTest extends PHPUnit_Framework_TestCase
 		$this->assertTrue($form->validate(array('id' => null)));
 		$this->assertEquals(null, $form->id);
 	}
-
-	// public function values()
-	// {
-	// 	return array(
-	// 		array(''),
-	// 		array(1),
-	// 		array(false),
-	// 		array(true),
-	// 		array(0),
-	// 		array(0.5),
-	// 		array('1'),
-	// 		array('abc'),
-	// 		array(array()),
-	// 		array(new stdClass()),
-	// 	);
-	// }
-	// /**
-	//  * @dataProvider values
-	//  */
-	// public function testValidate($data)
-	// {
-	// 	$form = new Form(array(
-	// 		'f' => array('each' => array())
-	// 	));
-
-	// 	var_dump($form->validate(array('f' => $data)));
-	// 	var_dump('value=',$form->f);
-	// 	$this->assertTrue(is_array($form->f), gettype($data)." has been casted to array");
-	// }
 }
