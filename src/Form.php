@@ -444,7 +444,8 @@ class Form implements ArrayAccess
 		$opt = array_merge(array(
 			'use_default' => true,
 			'stop_on_error' => true,
-			'allow_empty' => true
+			'allow_empty' => true,
+			'ignore_extraneous' => true
 		), $opt);
 
 		// reset errors
@@ -484,6 +485,13 @@ class Form implements ArrayAccess
 
 			// merge with the $values array of the class for later use (e.g. repopulate the form)
 			$this->values[$field] = $value;
+		}
+
+		if ( ! $opt['ignore_extraneous'] ) {
+			$extraneous = array_diff(array_keys($values), array_keys($this->rules));
+			foreach ( $extraneous as $field ) {
+				$this->errors[$field] = array('extraneous' => true);
+			}
 		}
 
 		return empty($this->errors);

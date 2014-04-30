@@ -383,6 +383,24 @@ class FormTest extends PHPUnit_Framework_TestCase
 		}
 	}
 
+	public function testIgnoreExtraneous()
+	{
+		$values = array(
+			'a' => 1,
+			'b' => 2
+		);
+		$form = new Form(array(
+			'a' => array('required')
+		));
+		$this->assertTrue($form->validate($values));
+		$this->assertEquals($values['a'], $form->a);
+		$this->assertNull($form->b);
+
+		$form->setValues(array());
+		$this->assertFalse($form->validate($values, array('ignore_extraneous' => false)));
+		$this->assertTrue($form->hasErrors('b'));
+	}
+
 	public function testSubForm()
 	{
 		$form = new Form(array(
