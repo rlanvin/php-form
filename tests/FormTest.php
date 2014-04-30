@@ -3,6 +3,27 @@
 class FormTest extends PHPUnit_Framework_TestCase
 {
 
+// OPTIONS TESTS
+
+	public function testGetSetOptions()
+	{
+		$form = new Form();
+		$form->setOptions(array(
+			'ignore_extraneous' => false,
+			'allow_empty' => false
+		));
+		$option = $form->getOptions();
+		$this->assertFalse($option['ignore_extraneous']);
+		$this->assertFalse($option['allow_empty']);
+
+		$form->setOptions(array(
+			'ignore_extraneous' => true,
+		));
+		$option = $form->getOptions();
+		$this->assertTrue($option['ignore_extraneous']);
+		$this->assertFalse($option['allow_empty']);
+	}
+
 // RULES TESTS
 
 	public function validRules()
@@ -398,6 +419,11 @@ class FormTest extends PHPUnit_Framework_TestCase
 
 		$form->setValues(array());
 		$this->assertFalse($form->validate($values, array('ignore_extraneous' => false)));
+		$this->assertTrue($form->hasErrors('b'));
+
+		$form->setValues(array());
+		$form->setOptions(array('ignore_extraneous' => false));
+		$this->assertFalse($form->validate($values));
 		$this->assertTrue($form->hasErrors('b'));
 	}
 

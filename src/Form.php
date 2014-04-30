@@ -47,14 +47,24 @@ class Form implements ArrayAccess
 	protected $errors = array();
 
 	/**
+	 * Default options array
+	 * @var array
+	 */
+	protected $options = array(
+		'use_default' => true,
+		'stop_on_error' => true,
+		'allow_empty' => true,
+		'ignore_extraneous' => true
+	);
+
+	/**
 	 * Constructor
 	 *
 	 * @param $rules array The form definition, an assoc array of field_name => rules
 	 */
-	public function __construct($rules = array(), $default_values = array())
+	public function __construct($rules = array(), $options = array())
 	{
-		$this->values = $default_values;
-
+		$this->setOptions($options);
 		$this->setRules($rules);
 	}
 
@@ -69,6 +79,18 @@ class Form implements ArrayAccess
 		if ( ! $field ) {
 			throw new InvalidArgumentException("$name cannot be empty");
 		}
+	}
+
+// OPTIONS
+
+	public function setOptions(array $options)
+	{
+		$this->options = array_merge($this->options, $options);
+	}
+
+	public function getOptions()
+	{
+		return $this->options;
 	}
 
 // RULES
@@ -441,12 +463,7 @@ class Form implements ArrayAccess
 	 */
 	public function validate(array $values, array $opt = array())
 	{
-		$opt = array_merge(array(
-			'use_default' => true,
-			'stop_on_error' => true,
-			'allow_empty' => true,
-			'ignore_extraneous' => true
-		), $opt);
+		$opt = array_merge($this->options, $opt);
 
 		// reset errors
 		$this->errors = array();
