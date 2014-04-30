@@ -470,31 +470,38 @@ class Form implements ArrayAccess
 
 		foreach ( $this->rules as $field => $rules ) {
 			$value = null;
-
-			// use provided value if exists
-			if ( array_key_exists($field, $values) ) {
-				$value = $values[$field];
-			}
-			// otherwise, use default if exists
-			elseif ( $opt['use_default'] && array_key_exists($field, $this->values) ) {
-				$value = $this->values[$field];
-			}
-
-			// subform
+			
+			// subform => recursive check
 			if ( $rules instanceof self ) {
+				// use provided value if exists
+				if ( array_key_exists($field, $values) ) {
+					$value = $values[$field];
+				}
+
 				if ( ! is_array($value) ) {
 					$value = array();
 				}
-				// pass values to the subform (so it can uses default values)
+
+				// pass default values to the subform
 				$rules->setValues($this->getValue($field) ?: array());
+				// pass the value as it (the subform will take care of using default)
 				$errors = $rules->validate($value, $opt);
 				$value = $rules->getValues();
 				if ( $errors !== true ) {
 					$errors = $rules->getErrors();
 				}
 			}
-			// normal rules array
+			// normal
 			else {
+				// use provided value if exists
+				if ( array_key_exists($field, $values) ) {
+					$value = $values[$field];
+				}
+				// otherwise, use default if exists
+				elseif ( $opt['use_default'] && array_key_exists($field, $this->values) ) {
+					$value = $this->values[$field];
+				}
+
 				$errors = $this->validateValue($value, $rules, $opt);
 			}
 

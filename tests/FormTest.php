@@ -425,6 +425,10 @@ class FormTest extends PHPUnit_Framework_TestCase
 		$form->setOptions(array('ignore_extraneous' => false));
 		$this->assertFalse($form->validate($values));
 		$this->assertTrue($form->hasErrors('b'));
+
+		$form->setValues(array('c' => 3));
+		$form->setOptions(array('ignore_extraneous' => false));
+		$this->assertTrue($form->validate(array('a' => 1)), 'Ignore extraneous default');
 	}
 
 	public function testSubForm()
@@ -446,15 +450,25 @@ class FormTest extends PHPUnit_Framework_TestCase
 		
 		// invalid data sets
 		$form->setValues(array());
-		$form->getRules('subform')->setValues(array());
 		$this->assertFalse($form->validate(array()));
 		$this->assertFalse($form->validate(array('subform' => array())));
 		$this->assertFalse($form->validate(array('subform' => array('last_name' => 'Wayne'))));
 		$this->assertFalse($form->validate(array('subform' => array('first_name' => '', 'last_name' => 'Wayne'))));
 
-		// subform + allow empty (i.e test that values are passed to subform)
+		// subform + allow empty (i.e. test that values are passed to subform)
 		$form->setValues(array('subform' => array('first_name' => 'John')));
 		$this->assertTrue($form->validate(array('subform' => array('last_name' => 'Doe'))), 'Values are passed to subform');
+
+		// subform + extraneous (i.e. test that we are careful in passing the values to the subform)
+		$form->setValues(array(
+			'subform' => array('first_name' => 'John', 'email' => 'john@doe.com')
+		));
+		$this->assertTrue($form->validate(array('subform' => array('last_name' => 'Doe')), array('ignore_extraneous' => false)), 'Subform also ignore extraneous default');
+
+		$form->setValues(array(
+			'subform' => array('first_name' => 'John', 'last_name' => 'Foobar', 'email' => 'john@doe.com')
+		));
+		$this->assertTrue($form->validate(array(), array('ignore_extraneous' => false)), 'Subform also ignore extraneous default');
 	}
 
 	public function testEach()
