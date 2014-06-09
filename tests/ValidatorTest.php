@@ -153,6 +153,22 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 		}
 	}
 
+	public function testUrl()
+	{
+		$testUrls = array(
+			'www.asdf.com' => false,
+			'example.org' => false,
+			'/peach.kingdom' => false,
+			'x.something.co.uk' => false,
+			'http:myname.com' => false,
+			'https://www.sdf.org' => true
+		);
+
+		foreach ( $testUrls as $url => $valid ) {
+			$this->assertEquals($valid, Validator::url($url));
+		}
+	}
+
 	public function testNumeric()
 	{
 		$valid = array(

@@ -111,7 +111,7 @@ class Validator
 	 * @param $regexp string Regular expression
 	 * @return bool
 	 */
-	public static function regexp($value, $regexp)
+	static public function regexp($value, $regexp)
 	{
 		if ( ! is_string($regexp) ) {
 			throw new InvalidArgumentException('The regular expression must be a string');
@@ -148,7 +148,7 @@ class Validator
 	 * @see http://www.php.net/trim
 	 * @return bool
 	 */
-	public static function trim(&$value, $character_mask = true)
+	static public function trim(&$value, $character_mask = true)
 	{
 		// trim will trigger an error if called with something else than a string
 		if ( ! is_string($value) && ! is_int($value) ) {
@@ -163,6 +163,14 @@ class Validator
 		return true;
 	}
 
+	static public function url(&$value)
+	{
+		if ( ! is_string($value) ) {
+			return false;
+		}
+
+		return filter_var($value, FILTER_VALIDATE_URL) !== false;
+	}
 
 	// static public function date_max($value, $param)
 	// {
