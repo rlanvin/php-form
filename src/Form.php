@@ -47,6 +47,13 @@ class Form implements ArrayAccess
 	protected $errors = array();
 
 	/**
+	 * Store the parent Form object when it's a subform, so it's accessible
+	 * within a validator callback.
+	 * @var Form
+	 */
+	protected $parent = null;
+
+	/**
 	 * Default options array
 	 * @var array
 	 */
@@ -481,7 +488,8 @@ class Form implements ArrayAccess
 				if ( ! is_array($value) ) {
 					$value = array();
 				}
-
+				// set the parent so it's accessible from a callback function
+				$rules->setParent($this);
 				// pass default values to the subform
 				$rules->setValues($this->getValue($field) ?: array());
 				// pass the value as it (the subform will take care of using default)
@@ -620,5 +628,17 @@ class Form implements ArrayAccess
 		// return true because $errors is already filled 
 		// we dont want validate() to fill it again
 		return true;
+	}
+
+// SUB-FORMS HELPERS
+
+	public function setParent(Form $parent)
+	{
+		$this->parent = $parent;
+	}
+
+	public function getParent()
+	{
+		return $this->parent;
 	}
 }

@@ -511,6 +511,25 @@ class FormTest extends PHPUnit_Framework_TestCase
 		$this->assertTrue($form->validate(array('field' => '')), 'Required evaluates to false');
 	}
 
+	public function testConditionalValueWithSubform()
+	{
+		$form = new Form(array(
+			'main_field' => array('required'),
+			'options' => new Form(array(
+				'sub_field' => array('required' => create_function('$form', 'return $form->getParent()->main_field == 42;'))
+			))
+		));
+
+		$this->assertTrue($form->validate(array('main_field' => 42, 'options' => array('sub_field' => 1))), 'Required evaluates to true');
+		$form->setValues(array());
+		$this->assertFalse($form->validate(array('main_field' => 42, 'options' => array())), 'Required evaluates to true');
+
+		$form->setValues(array());
+		$this->assertTrue($form->validate(array('main_field' => 0, 'options' => array('sub_field' => 1))), 'Required evaluates to false');
+		$form->setValues(array());
+		$this->assertTrue($form->validate(array('main_field' => 0, 'options' => array())), 'Required evaluates to false');
+	}
+
 	public function testCallback()
 	{
 		$callback = create_function('&$value,$form', '$value = 42; $form->proof = "it worked!"; return true;');
