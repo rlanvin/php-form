@@ -25,6 +25,33 @@
  */
 class Validator
 {
+	/**
+	 * Check that the input value is considered a boolean
+	 * and cast the value to '0' or '1'.
+	 *
+	 * Note: we return '0' or '1' as *string*.
+	 * This is made to accomodate PDO/MySQL that don't handle boolean directly.
+	 * A SELECT statement will return '0' or '1' as strings too, so this way
+	 * we're consistant accross the board.
+	 * This is also made to avoid bugs with in_array() and the like.
+	 */
+	static public function bool(&$value)
+	{
+		$true_values = array('true', 't', 'yes', 'y', 'on', '1', 1, true);
+		$false_values = array('false', 'f', 'no', 'n', 'off', '0', 0, false);
+
+		if ( in_array($value, $true_values, true) ) {
+			$value = '1';
+			return true;
+		}
+		elseif ( in_array($value, $false_values, true) ) {
+			$value = '0';
+			return true;
+		}
+
+		return false;
+	}
+
 	/** 
 	 * Check that the input is a valid date.
 	 * @see http://www.php.net/strtotime
@@ -198,29 +225,6 @@ class Validator
 		return $value >= $param;
 	}
 
-
-	/**
-	 * Note: we return '0' or '1' as *string*.
-	 * This is made to accomodate PDO/MySQL that don't handle boolean directly.
-	 * A SELECT statement will return '0' or '1' as strings too, so this way
-	 * we're consistant accross the board.
-	 */
-	static public function bool(&$value)
-	{
-		$true_values = array('true', 't', 'yes', 'y', 'on', '1');
-		$false_values = array('false', 'f', 'no', 'n', 'off', '0');
-
-		if ( in_array($value, $true_values) ) {
-			$value = '1';
-			return true;
-		}
-		elseif ( in_array($value, $false_values) ) {
-			$value = '0';
-			return true;
-		}
-
-		return false;
-	}
 
 	static public function is_array($value)
 	{

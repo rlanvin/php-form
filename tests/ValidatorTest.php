@@ -2,6 +2,18 @@
 
 class ValidatorTest extends PHPUnit_Framework_TestCase
 {
+	public function testBool()
+	{
+		// see http://stackoverflow.com/questions/13846769/php-in-array-0-value
+		$value = 0;
+		$this->assertTrue(Validator::bool($value), 'int 0 is valid boolean and is false');
+		$this->assertEquals('0',$value);
+
+		$value = 1;
+		$this->assertTrue(Validator::bool($value), 'int 1 is valid boolean and is true');
+		$this->assertEquals('1',$value);
+	}
+
 	public function testDate()
 	{
 		$this->assertTrue(Validator::date('2014-01-01'));
