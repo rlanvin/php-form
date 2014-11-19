@@ -1,6 +1,6 @@
 # PHP Form
 
-Lightweight form validation library for PHP, with a concise syntax.
+Lightweight form validation library for PHP, with a concise syntax and powerful use of closures.
 
 [![Build Status](https://travis-ci.org/rlanvin/php-form.svg?branch=master)](https://travis-ci.org/rlanvin/php-form)
 
@@ -13,7 +13,7 @@ $form = new Form([
     'email' => ['required', 'email']
 ]);
 
-if ( $form->validates($_POST) ) {
+if ( $form->validate($_POST) ) {
     // $_POST data is valid
     save_to_db_or_something($form->getValues());
 }

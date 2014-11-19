@@ -148,7 +148,7 @@ class Form implements ArrayAccess
 	 *
 	 * If the field is not set in the rules array, it'll return empty array.
 	 * 
-	 * @return array
+	 * @return array|Form
 	 */
 	public function getRules($field = '')
 	{
@@ -174,9 +174,9 @@ class Form implements ArrayAccess
 		}
 
 		// expand sub-form
-		if ( $rules instanceof self ) {
-			$rules = $rules->getRules();
-		}
+		// if ( $rules instanceof self ) {
+		// 	$rules = $rules->getRules();
+		// }
 
 		return $rules;
 	}
