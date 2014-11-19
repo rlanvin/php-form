@@ -530,6 +530,17 @@ class FormTest extends PHPUnit_Framework_TestCase
 		$this->assertTrue($form->validate(array('main_field' => 0, 'options' => array())), 'Required evaluates to false');
 	}
 
+	public function testConditionalRules()
+	{
+		$form = new Form(array(
+			'field' => array(),
+			'options' => create_function('$form', 'return $form->field == "x" ? array("required" => true) : array();')
+		));
+
+		$this->assertTrue($form->validate(array('field' => 42)));
+		$this->assertFalse($form->validate(array('field' => 'x')), 'Options is required when field = x');
+	}
+
 	public function testCallback()
 	{
 		$callback = create_function('&$value,$form', '$value = 42; $form->proof = "it worked!"; return true;');

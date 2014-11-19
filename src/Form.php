@@ -137,6 +137,8 @@ class Form implements ArrayAccess
 	 */
 	public function addRules(array $rules)
 	{
+		// XXX apparently this creates a problem when trying to merge rules
+		// that are subforms
 		$this->rules = array_merge_recursive($this->rules, self::parseRules($rules));
 		return $this;
 	}
@@ -146,7 +148,7 @@ class Form implements ArrayAccess
 	 *
 	 * If the field is not set in the rules array, it'll return empty array.
 	 * 
-	 * @return array|Form
+	 * @return array
 	 */
 	public function getRules($field = '')
 	{
@@ -162,7 +164,21 @@ class Form implements ArrayAccess
 			return array();
 		}
 
-		return $this->rules[$field];
+		// execute closure
+		$rules = $this->rules[$field];
+		if ( is_callable($rules) ) {
+			$rules = call_user_func_array($rules, array($this));
+			if ( is_array($rules) ) {
+				$rules = $this->expandRulesArray($rules);
+			}
+		}
+
+		// expand sub-form
+		if ( $rules instanceof self ) {
+			$rules = $rules->getRules();
+		}
+
+		return $rules;
 	}
 
 	/**
@@ -227,8 +243,10 @@ class Form implements ArrayAccess
 				$field_rules = self::expandRulesArray($field_rules);
 			} elseif ( $field_rules instanceof self ) {
 				// do nothing
+			} elseif ( is_callable($field_rules) ) {
+				// do nothing
 			} else {
-				throw new InvalidArgumentException("Invalid rules for field $field, must be array or ".__CLASS__);
+				throw new InvalidArgumentException("Invalid rules for field $field, must be array, closure or ".__CLASS__);
 			}
 		}
 		return $rules;
@@ -477,7 +495,21 @@ class Form implements ArrayAccess
 
 		foreach ( $this->rules as $field => $rules ) {
 			$value = null;
-			
+
+			// closure
+			if ( is_callable($rules) ) {
+				$rules = call_user_func_array($rules, array($this));
+				if ( is_array($rules) ) {
+					$rules = $this->expandRulesArray($rules);
+				}
+				elseif ( $rules instanceof self ) {
+					// do nothing
+				}
+				else {
+					throw new RuntimeException(sprintf('Rules closure for field %s must return an array or a '.__CLASS__.'of rules (%s returned)', $field, gettype($rules)));
+				}
+			}
+
 			// subform => recursive check
 			if ( $rules instanceof self ) {
 				// use provided value if exists
