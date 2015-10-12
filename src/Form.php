@@ -11,7 +11,7 @@
 
 /**
  */
-class Form implements ArrayAccess
+class Form implements \ArrayAccess
 {
 	const EACH = 'each';
 
@@ -81,10 +81,10 @@ class Form implements ArrayAccess
 	public static function checkStringNotEmpty($field, $name = 'Field name')
 	{
 		if ( ! is_string($field) ) {
-			throw new InvalidArgumentException(sprintf("$name must be a string (%s given)", gettype($field)));
+			throw new \InvalidArgumentException(sprintf("$name must be a string (%s given)", gettype($field)));
 		}
 		if ( ! $field ) {
-			throw new InvalidArgumentException("$name cannot be empty");
+			throw new \InvalidArgumentException("$name cannot be empty");
 		}
 	}
 
@@ -113,7 +113,7 @@ class Form implements ArrayAccess
 		// set the rules for one particular field
 		if ( is_string($field_or_rules) ) {
 			if ( ! $field_or_rules ) {
-				throw new InvalidArgumentException("Field name cannot be empty");
+				throw new \InvalidArgumentException("Field name cannot be empty");
 			}
 			$this->rules[$field_or_rules] = self::expandRulesArray($rules);
 			return $this;
@@ -125,7 +125,7 @@ class Form implements ArrayAccess
 			return $this;
 		}
 
-		throw new InvalidArgumentException("Unsupported parameter type");
+		throw new \InvalidArgumentException("Unsupported parameter type");
 	}
 
 	/**
@@ -153,7 +153,7 @@ class Form implements ArrayAccess
 	public function getRules($field = '')
 	{
 		if ( ! is_string($field) ) {
-			throw new InvalidArgumentException(sprintf("Field name must be a string (%s given)", gettype($field)));
+			throw new \InvalidArgumentException(sprintf("Field name must be a string (%s given)", gettype($field)));
 		}
 
 		if ( ! $field ) {
@@ -246,7 +246,7 @@ class Form implements ArrayAccess
 			} elseif ( is_callable($field_rules) ) {
 				// do nothing
 			} else {
-				throw new InvalidArgumentException("Invalid rules for field $field, must be array, closure or ".__CLASS__);
+				throw new \InvalidArgumentException("Invalid rules for field $field, must be array, closure or ".__CLASS__);
 			}
 		}
 		return $rules;
@@ -276,7 +276,7 @@ class Form implements ArrayAccess
 				$new_array[$param] = true;
 			}
 			elseif ( $key == '' ) {
-				throw new InvalidArgumentException("Rule name cannot be empty");
+				throw new \InvalidArgumentException("Rule name cannot be empty");
 			}
 			elseif ( $key == self::EACH ) {
 				// these special keys have nested rules
@@ -432,7 +432,7 @@ class Form implements ArrayAccess
 	public function getErrors($field = '')
 	{
 		if ( ! is_string($field) ) {
-			throw new InvalidArgumentException(sprintf("Field name must be a string (%s given)", gettype($field)));
+			throw new \InvalidArgumentException(sprintf("Field name must be a string (%s given)", gettype($field)));
 		}
 
 		if ( ! $field ) {
@@ -465,7 +465,7 @@ class Form implements ArrayAccess
 	public function hasErrors($field = '')
 	{
 		if ( ! is_string($field) ) {
-			throw new InvalidArgumentException(sprintf("Field name must be a string (%s given)", gettype($field)));
+			throw new \InvalidArgumentException(sprintf("Field name must be a string (%s given)", gettype($field)));
 		}
 
 		if ( ! $field ) {
@@ -506,7 +506,7 @@ class Form implements ArrayAccess
 					// do nothing
 				}
 				else {
-					throw new RuntimeException(sprintf('Rules closure for field %s must return an array or a '.__CLASS__.'of rules (%s returned)', $field, gettype($rules)));
+					throw new \RuntimeException(sprintf('Rules closure for field %s must return an array or a '.__CLASS__.'of rules (%s returned)', $field, gettype($rules)));
 				}
 			}
 
@@ -623,7 +623,7 @@ class Form implements ArrayAccess
 					$param = true; // I don't want to set a callback into the errors array
 				}
 				else {
-					throw new InvalidArgumentException("Validator $validator not found");
+					throw new \InvalidArgumentException("Validator $validator not found");
 				}
 			}
 			// if the validator failed, we store the name of the validator in the $errors array

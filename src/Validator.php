@@ -112,7 +112,7 @@ class Validator
 			return false;
 		}
 		if ( ! is_int($length) && ! ctype_digit($length)) {
-			throw new InvalidArgumentException('The length must be an integer');
+			throw new \InvalidArgumentException('The length must be an integer');
 		}
 		return mb_strlen($value) <= $length;
 	}
@@ -126,7 +126,7 @@ class Validator
 			return false;
 		}
 		if ( ! is_int($length) && ! ctype_digit($length)) {
-			throw new InvalidArgumentException('The length must be an integer');
+			throw new \InvalidArgumentException('The length must be an integer');
 		}
 		return mb_strlen($value) >= $length;
 	}
@@ -141,10 +141,10 @@ class Validator
 	static public function regexp($value, $regexp)
 	{
 		if ( ! is_string($regexp) ) {
-			throw new InvalidArgumentException('The regular expression must be a string');
+			throw new \InvalidArgumentException('The regular expression must be a string');
 		}
 		if ( ! $regexp ) {
-			throw new InvalidArgumentException('The regular expression cannot be empty');
+			throw new \InvalidArgumentException('The regular expression cannot be empty');
 		}
 
 		return !! filter_var($value, FILTER_VALIDATE_REGEXP, array(

@@ -40,7 +40,7 @@ Just add this to your `composer.json` file:
 ```JSON
 {
     "require": {
-        "rlanvin/php-form": "dev-master"
+        "rlanvin/php-form": "1.*"
     }
 }
 ```
@@ -48,7 +48,6 @@ Just add this to your `composer.json` file:
 Then run `composer install` or `composer update`.
 
 Now you can use the autoloader, and you will have access to the library:
-
 
 ```php
 <?php
@@ -67,6 +66,10 @@ However be sure to come back regulary and check for updates.
 ## Documentation
 
 Complete doc is available in [the wiki](https://github.com/rlanvin/php-form/wiki).
+
+## Contribution
+
+Feel free to contribute! Just create a new issue or a new pull request.
 
 ## License
 
