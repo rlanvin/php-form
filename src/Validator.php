@@ -225,7 +225,9 @@ class Validator
 		return $value >= $param;
 	}
 
-
+	/**
+	 * Test that the value is an array
+	 */
 	static public function is_array($value)
 	{
 		return is_array($value);

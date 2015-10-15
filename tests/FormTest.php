@@ -391,7 +391,7 @@ class FormTest extends PHPUnit_Framework_TestCase
 	{
 		$test_rules = array(
 			array('min_length' => 2),
-			array('each' => array('min_length' => 2)),
+			// array('each' => array('min_length' => 2)),
 			array('date'),
 			array('time'),
 		);
@@ -400,7 +400,10 @@ class FormTest extends PHPUnit_Framework_TestCase
 				'id' => $rules
 			));
 			$this->assertTrue($form->validate(array('id' => '')), 'Empty value allowed by default');
-			$this->assertFalse($form->validate(array('id' => ''), array('allow_empty' => false)), 'Empty value not allowed by default, runned through rules');
+			$this->assertFalse($form->validate(array('id' => ''), array('allow_empty' => false)), sprintf(
+				'Empty value not allowed by default (rule %s)',
+				json_encode($rules)
+			));
 		}
 	}
 
@@ -474,9 +477,7 @@ class FormTest extends PHPUnit_Framework_TestCase
 	public function testEach()
 	{
 		$form = new Form(array(
-			'list' => array('each' => array(
-				'max_length' => 4
-			))
+			'list' => array('each' => array('min_length' => 1, 'max_length' => 4))
 		));
 
 		$this->assertTrue($form->validate(array('list' => array('a','b','c'))));
@@ -484,9 +485,51 @@ class FormTest extends PHPUnit_Framework_TestCase
 
 		$form->setValues(array());
 		$this->assertTrue($form->validate(array('garbage' => 'garbage')));
-		$this->assertEquals(array('list' => array()), $form->getValues(), 'List is set and casted to array');
+		$this->assertEquals(array('list' => array()), $form->getValues(), 'List is set and casted to array when missing');
 
-		$this->assertFalse($form->validate(array('list' => 'garbage')));
+		$form->setValues(array());
+		$this->assertFalse($form->validate(array('list' => 'garbage')), 'When not an array, auto casted to an array');
+		$this->assertEquals(array('max_length' => 4), $form->getErrors('list'));
+
+		$form->setValues(array());
+		$this->assertFalse($form->validate(array('list' => array('garbage'))), 'When not an array, does not validate');
+		$this->assertEquals(array('max_length' => 4), $form->getErrors('list'));
+
+		// with required = false and allow_empty = false
+		$form->setValues(array());
+		$this->assertTrue($form->validate(array('list' => array()), array('allow_empty' => false)));
+
+		// with required = true
+		$form = new Form(array(
+			'list' => array('required' => true, 'each' => array())
+		));
+		$this->assertTrue($form->validate(array('list' => 'garbage')));
+		$this->assertEquals(array('list' => array('garbage')), $form->getValues(), 'Original value is casted to an array');
+
+		$form->setValues(array());
+		$this->assertFalse($form->validate(array('list' => array())), 'Empty array does not pass required = true');
+
+		$form->setValues(array());
+		$this->assertFalse($form->validate(array('garbage' => 'garbage')));
+		$this->assertEquals(array('list' => array()), $form->getValues(), 'List is set and casted to array, when required and empty');
+
+		// used with is_array
+		$form = new Form(array(
+			'list' => array('is_array', 'each' => array('min_length' => 1, 'max_length' => 4))
+		));
+
+		$this->assertFalse($form->validate(array('list' => 'garbage')), 'When not an array, does not validate');
+		$this->assertEquals(array('is_array' => true), $form->getErrors('list'));
+		$this->assertEquals(array('list' => 'garbage'), $form->getValues(), 'Original value is not casted to an array when is_array is used');
+
+		// with required = true inside the each
+		$form = new Form(array(
+			'list' => array('each' => array('required' => true))
+		));
+		$this->assertTrue($form->validate(array('list' => array())), 'Ok for an empty array');
+		$form->setValues(array());
+		$this->assertFalse($form->validate(array('list' => array(''))), 'Not of for an empty array with a empty string');
+		$this->assertEquals(array('required' => true), $form->getErrors('list'));
 	}
 
 	public function testConditionalValue()

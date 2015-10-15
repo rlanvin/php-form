@@ -60,8 +60,8 @@ class Form implements \ArrayAccess
 	protected $options = array(
 		'use_default' => true,
 		'stop_on_error' => true,
-		'allow_empty' => true,
-		'ignore_extraneous' => true
+		'allow_empty' => true, // bypass all validators when the value is empty (otherwise: run validators even if the value is empty)
+		'ignore_extraneous' => true, // ignore values with no rules (otherwise: throws a validation error)
 	);
 
 	/**
@@ -568,10 +568,7 @@ class Form implements \ArrayAccess
 	 */
 	public function validateValue(& $value, array $rules, array $opt = array())
 	{
-		$opt = array_merge(array(
-			'stop_on_error' => true,
-			'allow_empty' => true
-		), $opt);
+		$opt = array_merge($this->options, $opt);
 
 		$errors = array();
 
@@ -586,6 +583,11 @@ class Form implements \ArrayAccess
 				}
 			}
 
+			// cast to an array if necessary
+			if ( isset($rules[self::EACH]) ) {
+				$value = array();
+			}
+
 			if ( $required ) {
 				$errors['required'] = true;
 				if ( $opt['stop_on_error'] ) {
@@ -593,12 +595,9 @@ class Form implements \ArrayAccess
 				}
 			}
 			elseif ( $opt['allow_empty'] ) {
-				// cast to an array if necessasry
-				if ( isset($rules[self::EACH]) ) {
-					$value = array();
-				}
 				return true;
 			}
+			// else we pass the value through the validators, even if it's empty
 		}
 		unset($rules['required']);
 
@@ -607,7 +606,7 @@ class Form implements \ArrayAccess
 
 			// special iterative validator for arrays
 			if ( $validator === self::EACH ) {
-				$ret = $this->validateMultipleValues($value, $param, $errors);
+				$ret = $this->validateMultipleValues($value, $param, $errors, $opt);
 			}
 			else {
 				// validator function (in Validator class)
@@ -639,19 +638,17 @@ class Form implements \ArrayAccess
 		return empty($errors) ? true : $errors;
 	}
 
-	protected function validateMultipleValues(& $values, $rules, & $errors = array())
+	protected function validateMultipleValues(& $values, $rules, & $errors = array(), array $opt = array())
 	{
-		if ( is_null($values) ) {
-			$values = array();
-		}
+		$opt = array_merge($this->options, $opt);
 
-		// if the value is not an array : error
+		// if the value is not an array : cast it
 		if ( ! is_array($values) ) {
-			return false;
+			$values = array($values);
 		}
 
 		foreach ( $values as &$value ) {
-			$ret = $this->validateValue($value, $rules);
+			$ret = $this->validateValue($value, $rules, $opt);
 			if ( $ret !== true ) {
 				$errors += $ret;
 			}

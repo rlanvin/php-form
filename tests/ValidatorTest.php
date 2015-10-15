@@ -63,6 +63,15 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 		$this->assertFalse(Validator::in_keys($value, array('foo' => 'XX')));
 	}
 
+	public function testIsArray()
+	{
+		$this->assertTrue(Validator::is_array(array()));
+		$this->assertTrue(Validator::is_array(array('foobar')));
+		$this->assertFalse(Validator::is_array('foobar'));
+		$this->assertFalse(Validator::is_array(null));
+		$this->assertFalse(Validator::is_array(42));
+	}
+
 	public function testMaxLength()
 	{
 		$this->assertTrue(Validator::max_length('1234', 10));
