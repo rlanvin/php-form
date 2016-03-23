@@ -25,6 +25,14 @@
  */
 class Validator
 {
+	static public function is_empty($value)
+	{
+		return $value === null || (is_array($value) && empty($value)) || (is_string($value) && trim($value) === '');
+	}
+
+///////////////////////////////////////////////////////////////////////////////
+// Type validator
+
 	/**
 	 * Check that the input value is considered a boolean
 	 * and cast the value to '0' or '1'.
@@ -71,6 +79,36 @@ class Validator
 	{
 		return !! filter_var($value, FILTER_VALIDATE_EMAIL);
 	}
+
+	/**
+	 * Test that the value is an array
+	 */
+	static public function is_array($value)
+	{
+		return is_array($value);
+	}
+
+	static public function is_string($value)
+	{
+		return is_string($value);
+	}
+
+	static public function url(&$value)
+	{
+		if ( ! is_string($value) ) {
+			return false;
+		}
+
+		return filter_var($value, FILTER_VALIDATE_URL) !== false;
+	}
+
+	static public function numeric($value)
+	{
+		return is_numeric($value);
+	}
+
+///////////////////////////////////////////////////////////////////////////////
+// Value validator
 
 	/**
 	 * Check that the value is in the param array
@@ -190,14 +228,7 @@ class Validator
 		return true;
 	}
 
-	static public function url(&$value)
-	{
-		if ( ! is_string($value) ) {
-			return false;
-		}
 
-		return filter_var($value, FILTER_VALIDATE_URL) !== false;
-	}
 
 	// static public function date_max($value, $param)
 	// {
@@ -209,12 +240,6 @@ class Validator
 	// 	return strtotime($value) >= $param;
 	// }
 
-
-	static public function numeric($value)
-	{
-		return is_numeric($value);
-	}
-
 	static public function max_value($value, $param)
 	{
 		return $value <= $param;
@@ -225,21 +250,4 @@ class Validator
 		return $value >= $param;
 	}
 
-	/**
-	 * Test that the value is an array
-	 */
-	static public function is_array($value)
-	{
-		return is_array($value);
-	}
-
-	static public function is_string($value)
-	{
-		return is_string($value);
-	}
-
-	static public function is_empty($value)
-	{
-		return $value === null || (is_array($value) && empty($value)) || (is_string($value) && trim($value) === '');
-	}
 }

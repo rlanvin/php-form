@@ -88,8 +88,6 @@ class Form implements \ArrayAccess
 		}
 	}
 
-// OPTIONS
-
 	public function setOptions(array $options)
 	{
 		$this->options = array_merge($this->options, $options);
@@ -100,6 +98,7 @@ class Form implements \ArrayAccess
 		return $this->options;
 	}
 
+///////////////////////////////////////////////////////////////////////////////
 // RULES
 
 	/**
@@ -280,7 +279,16 @@ class Form implements \ArrayAccess
 			}
 			elseif ( $key == self::EACH ) {
 				// these special keys have nested rules
-				$new_array[$key] = self::expandRulesArray($param);
+				if ( is_array($param) ) {
+					$new_array[$key] = self::expandRulesArray($param);
+				}
+				elseif ( $param instanceof self ) {
+					// do nothing at this stage
+					$new_array[$key] = $param;
+				}
+				else {
+					throw new \InvalidArgumentException('The rule "each" needs an array or a '.__CLASS__);
+				}
 			}
 			// nothing to flip
 			else {
@@ -290,6 +298,7 @@ class Form implements \ArrayAccess
 		return $new_array;
 	}
 
+///////////////////////////////////////////////////////////////////////////////
 // VALUES
 
 	/**
@@ -412,6 +421,7 @@ class Form implements \ArrayAccess
 		}
 	}
 
+///////////////////////////////////////////////////////////////////////////////
 // ERRORS
 
 	/**
@@ -480,10 +490,15 @@ class Form implements \ArrayAccess
 		$this->errors[$field][$message] = $param;
 	}
 
+///////////////////////////////////////////////////////////////////////////////
 // VALIDATION
 
 	/**
-	 * The values that are not in $rules array will be ignored (and not saved in the class).
+	 * Validate a array of values, using the rules stored in the class.
+	 * The values that are not in the rules array will be ignored (and not saved in the class).
+	 * The values that are in the rules array will be saved in the class for
+	 * later access.
+	 * The validation errors will also be saved.
 	 * @return bool
 	 */
 	public function validate(array $values, array $opt = array())
@@ -492,6 +507,7 @@ class Form implements \ArrayAccess
 
 		// reset errors
 		$this->errors = array();
+		$errors = array();
 
 		foreach ( $this->rules as $field => $rules ) {
 			$value = null;
@@ -506,7 +522,11 @@ class Form implements \ArrayAccess
 					// do nothing
 				}
 				else {
-					throw new \RuntimeException(sprintf('Rules closure for field %s must return an array or a '.__CLASS__.'of rules (%s returned)', $field, gettype($rules)));
+					throw new \RuntimeException(sprintf(
+						'Rules closure for field %s must return an array of rules or a '.__CLASS__.' (%s returned)',
+						$field,
+						gettype($rules))
+					);
 				}
 			}
 
@@ -525,11 +545,9 @@ class Form implements \ArrayAccess
 				// pass default values to the subform
 				$rules->setValues($this->getValue($field) ?: array());
 				// pass the value as it (the subform will take care of using default)
-				$errors = $rules->validate($value, $opt);
+				$ret = $rules->validate($value, $opt);
 				$value = $rules->getValues();
-				if ( $errors !== true ) {
-					$errors = $rules->getErrors();
-				}
+				$errors = $rules->getErrors();
 			}
 			// normal
 			else {
@@ -542,10 +560,10 @@ class Form implements \ArrayAccess
 					$value = $this->values[$field];
 				}
 
-				$errors = $this->validateValue($value, $rules, $opt);
+				$ret = $this->validateValue($value, $rules, $errors, $opt);
 			}
 
-			if ( $errors !== true ) {
+			if ( $ret !== true ) {
 				$this->errors[$field] = $errors;
 			}
 
@@ -564,9 +582,21 @@ class Form implements \ArrayAccess
 	}
 
 	/**
-	 * Validates one single value ($value) against a set of rules ($rules)
+	 * Validates one single value ($value) against a set of rules ($rules).
+	 *
+	 * This method is designed to be used internaly by validate(), but if needed
+	 * it can work an its own.
+	 *
+	 * @see validate()
+	 * @param $value  mixed The value to be validated. This is a reference, as the
+	 *                      value can be altered (sanitized, casted, etc.) by 
+	 *                      validators
+	 * @param $rules  array An array of rules (must have been previously expanded)
+	 * @param $errors array (optional) An array where the errors will be returned
+	 * @param $opt    array (optional) An array of options
+	 * @return bool
 	 */
-	public function validateValue(& $value, array $rules, array $opt = array())
+	public function validateValue(& $value, array $rules, array & $errors = array(), array $opt = array())
 	{
 		$opt = array_merge($this->options, $opt);
 
@@ -591,7 +621,7 @@ class Form implements \ArrayAccess
 			if ( $required ) {
 				$errors['required'] = true;
 				if ( $opt['stop_on_error'] ) {
-					return $errors;
+					return false;
 				}
 			}
 			elseif ( $opt['allow_empty'] ) {
@@ -601,12 +631,13 @@ class Form implements \ArrayAccess
 		}
 		unset($rules['required']);
 
+		$local_errors = array();
 		foreach ( $rules as $validator => $param ) {
 			$ret = true;
 
 			// special iterative validator for arrays
 			if ( $validator === self::EACH ) {
-				$ret = $this->validateMultipleValues($value, $param, $errors, $opt);
+				$ret = $this->validateMultipleValues($value, $param, $local_errors, $opt);
 			}
 			else {
 				// validator function (in Validator class)
@@ -624,41 +655,87 @@ class Form implements \ArrayAccess
 				else {
 					throw new \InvalidArgumentException("Validator $validator not found");
 				}
+
+				$local_errors = $param;
 			}
+
 			// if the validator failed, we store the name of the validator in the $errors array
-			// XXX shoudln't it be if $ret !== true ?
 			if ( $ret === false ) {
-				$errors[$validator] = $param;
+				$errors[$validator] = $local_errors;
 				if ( $opt['stop_on_error'] ) {
-					return $errors;
+					return false;
 				}
 			}
 		}
 
-		return empty($errors) ? true : $errors;
+		// return empty($errors) ? true : $errors;
+		return empty($errors);
 	}
 
-	protected function validateMultipleValues(& $values, $rules, & $errors = array(), array $opt = array())
+	/**
+	 * Validate a value that is expected to be an array of values ($values) against
+	 * a set of rules ($rules) or a subform
+	 * 
+	 * This method is designed to be used internaly by validate(), but if needed
+	 * it can work an its own.
+	 *
+	 * @param $values  mixed The value to validate, should be an array or will be
+	 *                       casted
+	 * @param $rules   mixed An array of rules (expanded), or a subform
+	 * @param $errors array (optional) An array where the errors will be returned
+	 * @param $opt    array (optional) An array of options
+	 * @return bool
+	 */
+	public function validateMultipleValues(& $values, $rules, array & $errors = array(), array $opt = array())
 	{
 		$opt = array_merge($this->options, $opt);
 
-		// if the value is not an array : cast it
+		$errors = array();
+
+		// if the value is not an array, cast it
 		if ( ! is_array($values) ) {
 			$values = array($values);
 		}
-
-		foreach ( $values as &$value ) {
-			$ret = $this->validateValue($value, $rules, $opt);
-			if ( $ret !== true ) {
-				$errors += $ret;
+		// validate against a set of rules
+		if ( is_array($rules) ) {
+			$local_errors = array();
+			foreach ( $values as $key => &$value ) {
+				$ret = $this->validateValue($value, $rules, $local_errors, $opt);
+				if ( $ret !== true ) {
+					$errors[$key] = $local_errors;
+				}
 			}
+		}
+		// validate against a subform (to validate array of assoc arrays)
+		elseif ( $rules instanceof self ) {
+			// set the parent so it's accessible from a callback function
+			$rules->setParent($this);
+
+			// subform => recursive check
+			foreach ( $values as $key => &$value ) {
+				if ( ! is_array($value) ) {
+					$value = array();
+				}
+				// default values are not passed here, because in the context of an array
+				// we do not merge (it's how it behaves with a normal "each")
+				$rules->setValues(array());
+				$ret = $rules->validate($value, $opt);
+				$value = $rules->getValues();
+				if ( $ret !== true ) {
+					$errors[$key] = $rules->getErrors();
+				}
+			}
+		}
+		else {
+			throw new \InvalidArgumentException("$rules must be an array or a instance of ".__CLASS__);
 		}
 
 		// return true because $errors is already filled 
 		// we dont want validate() to fill it again
-		return true;
+		return empty($errors);
 	}
 
+///////////////////////////////////////////////////////////////////////////////
 // SUB-FORMS HELPERS
 
 	public function setParent(Form $parent)

@@ -3,7 +3,8 @@
 class FormTest extends PHPUnit_Framework_TestCase
 {
 
-// OPTIONS TESTS
+///////////////////////////////////////////////////////////////////////////////
+// Options
 
 	public function testGetSetOptions()
 	{
@@ -24,7 +25,8 @@ class FormTest extends PHPUnit_Framework_TestCase
 		$this->assertFalse($option['allow_empty']);
 	}
 
-// RULES TESTS
+///////////////////////////////////////////////////////////////////////////////
+// Rules
 
 	public function validRules()
 	{
@@ -246,7 +248,8 @@ class FormTest extends PHPUnit_Framework_TestCase
 		$this->assertTrue($form->hasRules('name'));
 	}
 
-// VALUES TESTS
+///////////////////////////////////////////////////////////////////////////////
+// Values
 
 	public function testGetSetValues()
 	{
@@ -286,7 +289,8 @@ class FormTest extends PHPUnit_Framework_TestCase
 		$form->getValue($argument);
 	}
 
-// ERRORS TESTS
+///////////////////////////////////////////////////////////////////////////////
+// Errors
 
 	public function testGetSetErrors()
 	{
@@ -328,12 +332,8 @@ class FormTest extends PHPUnit_Framework_TestCase
 		$this->assertTrue($form->hasErrors('first_name'));
 	}
 
-// VALIDATION TESTS
-
-	public function testForm()
-	{
-
-	}
+///////////////////////////////////////////////////////////////////////////////
+// Validation options
 
 	public function testUseDefault()
 	{
@@ -434,6 +434,71 @@ class FormTest extends PHPUnit_Framework_TestCase
 		$this->assertTrue($form->validate(array('a' => 1)), 'Ignore extraneous default');
 	}
 
+///////////////////////////////////////////////////////////////////////////////
+// Validation process
+
+	/**
+	 * @depends testGetSetValues
+	 */
+	public function testGetValueAfterValidation()
+	{
+		$valid_ids = array(1,2,3,4);
+		$form = new Form(array(
+			'id' => array('in' => $valid_ids)
+		));
+		$this->assertTrue($form->validate(array('id' => 1)));
+		$this->assertEquals(1, $form->id);
+
+		$form->id = 2;
+		$this->assertTrue($form->validate(array('id' => 1)));
+		$this->assertEquals(1, $form->id, 'Default value has been replaced by validated value');
+
+		$form->id = 2;
+		$this->assertFalse($form->validate(array('id' => 42)));
+		$this->assertEquals(42, $form->id, 'Default value has been replaced by invalid value for repopulating the form');
+
+		$form->id = 2;
+		$this->assertTrue($form->validate(array()));
+		$this->assertEquals(2, $form->id, "Default value hasn't been touched when not present in array");
+
+		$form->id = 2;
+		$this->assertTrue($form->validate(array('id' => null)));
+		$this->assertEquals(null, $form->id);
+	}
+
+	public function testValidateValue()
+	{
+		$form = new Form();
+
+		$value = '';
+		$errors = array();
+		$this->assertFalse($form->validateValue($value, ['required' => true], $errors));
+		$this->assertEquals(array('required' => true), $errors);
+
+		$value = 'something';
+		$this->assertTrue($form->validateValue($value, ['required' => true], $errors));
+		$this->assertEmpty($errors);
+	}
+
+	public function testValidateMultipleValues()
+	{
+		$form = new Form();
+
+		$value = array('');
+		$errors = array();
+
+		$this->assertFalse($form->validateMultipleValues($value, ['required' => true], $errors));
+
+		$value = array(1,2,'garbage');
+		$this->assertFalse($form->validateMultipleValues($value, ['numeric' => true], $errors));
+
+		$value = array(1,2,3);
+		$this->assertTrue($form->validateMultipleValues($value, ['numeric' => true], $errors));
+	}
+
+///////////////////////////////////////////////////////////////////////////////
+// Special validators
+
 	public function testSubForm()
 	{
 		$form = new Form(array(
@@ -487,17 +552,26 @@ class FormTest extends PHPUnit_Framework_TestCase
 		$this->assertTrue($form->validate(array('garbage' => 'garbage')));
 		$this->assertEquals(array('list' => array()), $form->getValues(), 'List is set and casted to array when missing');
 
-		$form->setValues(array());
-		$this->assertFalse($form->validate(array('list' => 'garbage')), 'When not an array, auto casted to an array');
-		$this->assertEquals(array('max_length' => 4), $form->getErrors('list'));
+		$this->assertFalse($form->validate(array('list' => 'garbage')), 'When not an array, autocasted, but does not validate because max_length failed');
+		$this->assertEquals(array(
+			'each' => array(
+				0 => array('max_length' => 4)
+			)
+		), $form->getErrors('list'));
 
-		$form->setValues(array());
-		$this->assertFalse($form->validate(array('list' => array('garbage'))), 'When not an array, does not validate');
-		$this->assertEquals(array('max_length' => 4), $form->getErrors('list'));
+		$this->assertFalse($form->validate(array('list' => array('garbage'))), 'When an array with garbage, does not validate');
+		$this->assertEquals(array(
+			'each' => array(
+				0 => array('max_length' => 4)
+			)
+		), $form->getErrors('list'));
 
 		// with required = false and allow_empty = false
 		$form->setValues(array());
-		$this->assertTrue($form->validate(array('list' => array()), array('allow_empty' => false)));
+		$this->assertTrue($form->validate(
+			array('list' => array()),
+			array('allow_empty' => false)
+		), "Since it is not required, allow_empty won't be triggered");
 
 		// with required = true
 		$form = new Form(array(
@@ -506,14 +580,16 @@ class FormTest extends PHPUnit_Framework_TestCase
 		$this->assertTrue($form->validate(array('list' => 'garbage')));
 		$this->assertEquals(array('list' => array('garbage')), $form->getValues(), 'Original value is casted to an array');
 
-		$form->setValues(array());
 		$this->assertFalse($form->validate(array('list' => array())), 'Empty array does not pass required = true');
+		$this->assertEquals(array(
+			'required' => true
+		), $form->getErrors('list'));
 
 		$form->setValues(array());
 		$this->assertFalse($form->validate(array('garbage' => 'garbage')));
 		$this->assertEquals(array('list' => array()), $form->getValues(), 'List is set and casted to array, when required and empty');
 
-		// used with is_array
+		// used in conjuction with is_array type check
 		$form = new Form(array(
 			'list' => array('is_array', 'each' => array('min_length' => 1, 'max_length' => 4))
 		));
@@ -528,14 +604,62 @@ class FormTest extends PHPUnit_Framework_TestCase
 		));
 		$this->assertTrue($form->validate(array('list' => array())), 'Ok for an empty array');
 		$form->setValues(array());
-		$this->assertFalse($form->validate(array('list' => array(''))), 'Not of for an empty array with a empty string');
-		$this->assertEquals(array('required' => true), $form->getErrors('list'));
+		$this->assertFalse($form->validate(array('list' => array(''))), 'Not ok for an empty array with a empty string inside it');
+		$this->assertEquals(array('each' => array(0 => array('required' => true))), $form->getErrors('list'));
+	}
+
+	public function testEachWithSubForm()
+	{
+		$form = new Form(array(
+			'list' => array('each' => new Form(array(
+				'name' => ['required']
+			)))
+		));
+
+		$this->assertTrue($form->validate(array(
+			'list' => array(
+				array('name' => 'John'),
+				array('name' => 'Jane')
+			)
+		)), "Each can be used with a subform to validate a array of arrays");
+
+		$form->setValues(array());
+		$this->assertFalse($form->validate(array(
+			'list' => array(
+				array('name' => 'John', 'age' => '12'),
+				array('age' => '12')
+			)
+		)), "Each can be used with a subform to validate a array of arrays (validation should fail)");
+
+		$this->assertEquals(array(
+			'each' => array(
+				1 => array(
+					'name' => array(
+						'required' => true
+					)
+				)
+			)
+		), $form->getErrors('list'), 'Error array contains the offset');
+
+		// with default values
+		$form->setValues(array(
+			'list' => array(
+				0 => array(),
+				1 => array('name' => 'Jane')
+			)
+		));
+		$this->assertFalse($form->validate(array(
+			'list' => array(
+				array('name' => 'John', 'age' => '12'),
+				array('age' => '12')
+			)
+		)), "Default values are not deep-merged (like for a normal each)");
 	}
 
 	public function testConditionalValue()
 	{
 		$form = new Form(array(
-			'field' => array('required' => create_function('$form', 'return true;'))
+			'field' => array('required' => function($form) { return true; })
 		));
 
 		$this->assertTrue($form->validate(array('field' => 42)), 'Required evaluates to true');
@@ -544,7 +668,7 @@ class FormTest extends PHPUnit_Framework_TestCase
 		$this->assertFalse($form->validate(array('field' => '')), 'Required evaluates to true');
 
 		$form = new Form(array(
-			'field' => array('required' => create_function('$form', 'return false;'))
+			'field' => array('required' => function($form) { return false; })
 		));
 
 		$this->assertTrue($form->validate(array('field' => 42)), 'Required evaluates to false');
@@ -559,7 +683,9 @@ class FormTest extends PHPUnit_Framework_TestCase
 		$form = new Form(array(
 			'main_field' => array('required'),
 			'options' => new Form(array(
-				'sub_field' => array('required' => create_function('$form', 'return $form->getParent()->main_field == 42;'))
+				'sub_field' => array('required' => function($form) {
+					return $form->getParent()->main_field == 42;
+				})
 			))
 		));
 
@@ -577,7 +703,9 @@ class FormTest extends PHPUnit_Framework_TestCase
 	{
 		$form = new Form(array(
 			'field' => array(),
-			'options' => create_function('$form', 'return $form->field == "x" ? array("required" => true) : array();')
+			'options' => function($form) { 
+				return $form->field == "x" ? array("required" => true) : array();
+			}
 		));
 
 		$this->assertTrue($form->validate(array('field' => 42)));
@@ -586,10 +714,12 @@ class FormTest extends PHPUnit_Framework_TestCase
 
 	public function testCallback()
 	{
-		$callback = create_function('&$value,$form', '$value = 42; $form->proof = "it worked!"; return true;');
-
 		$form = new Form(array(
-			'field' => array('callback' => $callback)
+			'field' => array('callback' => function(&$value, $form) {
+				$value = 42;
+				$form->proof = "it worked!";
+				return true;
+			})
 		));
 
 		$this->assertTrue($form->validate(array('field' => 1)));
@@ -609,7 +739,6 @@ class FormTest extends PHPUnit_Framework_TestCase
 		$this->assertFalse($form->validate(array('password' => 'abcdef', 'password_confirm' => '')));
 		$this->assertFalse($form->validate(array('password' => 'abcdef', 'password_confirm' => 'x')));
 
-
 		// order is important!
 		$form = new Form(array(
 			'password_confirm' => array('required', 'identical' => $identical_password_validator),
@@ -621,32 +750,4 @@ class FormTest extends PHPUnit_Framework_TestCase
 		$this->assertFalse($form->validate(array('password' => 'abcdef', 'password_confirm' => 'x')));
 	}
 
-	/**
-	 * @depends testGetSetValues
-	 */
-	public function testGetValueAfterValidation()
-	{
-		$valid_ids = array(1,2,3,4);
-		$form = new Form(array(
-			'id' => array('in' => $valid_ids)
-		));
-		$this->assertTrue($form->validate(array('id' => 1)));
-		$this->assertEquals(1, $form->id);
-
-		$form->id = 2;
-		$this->assertTrue($form->validate(array('id' => 1)));
-		$this->assertEquals(1, $form->id, 'Default value has been replaced by validated value');
-
-		$form->id = 2;
-		$this->assertFalse($form->validate(array('id' => 42)));
-		$this->assertEquals(42, $form->id, 'Default value has been replaced by invalid value for repopulating the form');
-
-		$form->id = 2;
-		$this->assertTrue($form->validate(array()));
-		$this->assertEquals(2, $form->id, "Default value hasn't been touched when not present in array");
-
-		$form->id = 2;
-		$this->assertTrue($form->validate(array('id' => null)));
-		$this->assertEquals(null, $form->id);
-	}
 }
