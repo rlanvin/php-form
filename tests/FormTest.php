@@ -612,7 +612,7 @@ class FormTest extends PHPUnit_Framework_TestCase
 	{
 		$form = new Form(array(
 			'list' => array('each' => new Form(array(
-				'name' => ['required']
+				'name' => array('required')
 			)))
 		));
 
