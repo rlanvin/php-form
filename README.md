@@ -1,8 +1,9 @@
 # PHP Form
 
-Lightweight form validation library for PHP, with a concise syntax and powerful use of closures.
+Lightweight form validation library for PHP, with a concise syntax and powerful use of closures. It can validate traditional form submissions as well as API requests.
 
 [![Build Status](https://travis-ci.org/rlanvin/php-form.svg?branch=master)](https://travis-ci.org/rlanvin/php-form)
+[![Latest Stable Version](https://poser.pugx.org/rlanvin/php-form/v/stable)](https://packagist.org/packages/rlanvin/php-form)
 
 ## Basic example
 
@@ -28,8 +29,10 @@ Complete doc is available in [the wiki](https://github.com/rlanvin/php-form/wiki
 
 ## Requirements
 
-- PHP >= 5.3 (PHP >= 5.4 highly recommended)
+- PHP >= 5.4
 - mbstring extension (http://www.php.net/manual/en/book.mbstring.php)
+
+If you are stuck with PHP 5.3, you can still use the v1.
 
 ## Installation
 
