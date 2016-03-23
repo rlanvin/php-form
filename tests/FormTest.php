@@ -472,11 +472,11 @@ class FormTest extends PHPUnit_Framework_TestCase
 
 		$value = '';
 		$errors = array();
-		$this->assertFalse($form->validateValue($value, ['required' => true], $errors));
+		$this->assertFalse($form->validateValue($value, array('required' => true), $errors));
 		$this->assertEquals(array('required' => true), $errors);
 
 		$value = 'something';
-		$this->assertTrue($form->validateValue($value, ['required' => true], $errors));
+		$this->assertTrue($form->validateValue($value, array('required' => true), $errors));
 		$this->assertEmpty($errors);
 	}
 
@@ -487,13 +487,13 @@ class FormTest extends PHPUnit_Framework_TestCase
 		$value = array('');
 		$errors = array();
 
-		$this->assertFalse($form->validateMultipleValues($value, ['required' => true], $errors));
+		$this->assertFalse($form->validateMultipleValues($value, array('required' => true), $errors));
 
 		$value = array(1,2,'garbage');
-		$this->assertFalse($form->validateMultipleValues($value, ['numeric' => true], $errors));
+		$this->assertFalse($form->validateMultipleValues($value, array('numeric' => true), $errors));
 
 		$value = array(1,2,3);
-		$this->assertTrue($form->validateMultipleValues($value, ['numeric' => true], $errors));
+		$this->assertTrue($form->validateMultipleValues($value, array('numeric' => true), $errors));
 	}
 
 ///////////////////////////////////////////////////////////////////////////////
