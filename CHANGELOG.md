@@ -6,6 +6,7 @@
 - Namespacing: `Form` is now `Form\Validator`
 - `Validator` static class is replaced by the namespace `Form\Rule`
 - Using PSR-4 autoloader
+- Adding syntax to access nested fields directly in `getRules`, `getErrors` and `getValues` (and similar `has*` methods)
 
 ### Rule changes
 

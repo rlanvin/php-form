@@ -51,9 +51,9 @@ class Validator implements \ArrayAccess
 	protected $errors = array();
 
 	/**
-	 * Store the parent Form object when it's a subform, so it's accessible
+	 * Store the parent Validator object when it's a subform, so it's accessible
 	 * within a validator callback.
-	 * @var Form
+	 * @var Validator
 	 */
 	protected $parent = null;
 
@@ -90,6 +90,33 @@ class Validator implements \ArrayAccess
 		if ( ! $field ) {
 			throw new \InvalidArgumentException("$name cannot be empty");
 		}
+	}
+
+	/**
+	 * @internal
+	 *
+	 * Returns the base field name, and a array of subfields (if any)
+	 * Example:
+	 * address[street][number]
+	 * becomes
+	 * ['address','street','number']
+	 *
+	 * @return array
+	 */
+	public static function expandFieldName($field)
+	{
+		if ( ! preg_match('/^(\w+)((\[\w+\])*)$/',$field, $matches) ) {
+			return array($field);
+		}
+
+		if ( empty($matches[2]) ) {
+			return array($field);
+		}
+
+		return array_merge(
+			array($matches[1]), // base field
+			preg_split('/\]\[/',trim($matches[2],'[]')) // subfields
+		);
 	}
 
 	public function setOptions(array $options)
@@ -150,8 +177,10 @@ class Validator implements \ArrayAccess
 	 * Return the rules array of this form or of a single field.
 	 *
 	 * If the field is not set in the rules array, it'll return empty array.
+	 * For nested validators, the field name can be written like this:
+	 * 'a[b][c]'
 	 * 
-	 * @return array|Form
+	 * @return array|Validator
 	 */
 	public function getRules($field = '')
 	{
@@ -164,22 +193,34 @@ class Validator implements \ArrayAccess
 		}
 
 		if ( ! isset($this->rules[$field]) ) {
-			return array();
+			$field = self::expandFieldName($field);
+		}
+		else {
+			$field = array($field);
 		}
 
-		// execute closure
-		$rules = $this->rules[$field];
-		if ( is_callable($rules) ) {
-			$rules = call_user_func_array($rules, array($this));
-			if ( is_array($rules) ) {
-				$rules = $this->expandRulesArray($rules);
+		// now $field is an array, for example 'a[b][c]' is now ['a','b','c']
+
+		$rules = $this->rules;
+		foreach ( $field as $f ) {
+			if ( $rules instanceof self ) {
+				$rules = $rules->getRules($f);
 			}
-		}
+			elseif ( isset($rules[$f]) ) {
+				$rules = $rules[$f];
+			}
+			else {
+				return array(); // not found, let's stop now
+			}
 
-		// expand sub-form
-		// if ( $rules instanceof self ) {
-		// 	$rules = $rules->getRules();
-		// }
+			// execute closure
+			if ( is_callable($rules) ) {
+				$rules = call_user_func_array($rules, array($this));
+				if ( is_array($rules) ) {
+					$rules = $this->expandRulesArray($rules);
+				}
+			}
+		};
 
 		return $rules;
 	}
@@ -194,7 +235,8 @@ class Validator implements \ArrayAccess
 	{
 		self::checkStringNotEmpty($field);
 
-		return isset($this->rules[$field]) && ! empty($this->rules[$field]);
+		// return isset($this->rules[$field]) && ! empty($this->rules[$field]);
+		return !empty($this->getRules($field));
 	}
 
 	/**
@@ -326,7 +368,21 @@ class Validator implements \ArrayAccess
 	public function getValue($field, $default = null)
 	{
 		self::checkStringNotEmpty($field);
-		return array_key_exists($field, $this->values) ? $this->values[$field] : $default;
+
+		if ( array_key_exists($field, $this->values) ) {
+			return $this->values[$field];
+		}
+		else {
+			$field = self::expandFieldName($field);
+			$values = $this->values;
+			foreach ( $field as $f ) {
+				if ( ! isset($values[$f]) ) {
+					return $default;
+				}
+				$values = $values[$f];
+			}
+			return $values;
+		}
 	}
 
 	/**
@@ -453,11 +509,21 @@ class Validator implements \ArrayAccess
 			return $this->errors;
 		}
 
-		if ( ! isset($this->errors[$field]) ) {
-			return array();
+		if ( isset($this->errors[$field]) ) {
+			$errors = $this->errors[$field];
+		}
+		else {
+			$field = self::expandFieldName($field);
+			$errors = $this->errors;
+			foreach ( $field as $f ) {
+				if ( ! isset($errors[$f]) ) {
+					return array();
+				}
+				$errors = $errors[$f];
+			}
 		}
 
-		return $this->errors[$field];
+		return $errors;
 	}
 
 	/**
@@ -486,7 +552,7 @@ class Validator implements \ArrayAccess
 			return ! empty($this->errors);
 		}
 
-		return isset($this->errors[$field]);
+		return ! empty($this->getErrors($field));
 	}
 
 	public function addError($message, $field = '', $param = true)

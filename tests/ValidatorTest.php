@@ -115,6 +115,23 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 		$form->getRules($argument);
 	}
 
+	public function testGetRulesNested()
+	{
+		$validator = new Validator([
+			'a' => new Validator([
+				'b' => ['required']
+			])
+		]);
+		$this->assertEquals(new Validator([
+			'b' => ['required']
+		]), $validator->getRules('a'));
+
+		$this->assertEquals(['required' => true], $validator->getRules('a[b]'));
+		$this->assertEquals([], $validator->getRules('a[b][c]'));
+		$this->assertEquals([], $validator->getRules('a[c]'));
+		$this->assertEquals(true, $validator->getRules('a[b][required]')); // unintended side effect
+	}
+
 	/**
 	 * @depends testGetRules
 	 * @dataProvider validRules
@@ -251,6 +268,32 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 		$form->getRuleValue('my_field', $argument);
 	}
 
+	public function testGetRuleValueNested()
+	{
+		$validator = new Validator([
+			'a' => new Validator([
+				'b' => ['required', 'max_length' => 255]
+			])
+		]);
+		$this->assertEquals(255, $validator->getRuleValue('a[b]', 'max_length'));
+	}
+
+	public function testIsRequired()
+	{
+		$validator = new Validator([
+			'a' => new Validator([
+				'b' => ['required'],
+				'c' => []
+			]),
+			'e' => ['required']
+		]);
+
+		$this->assertFalse($validator->isRequired('a'));
+		$this->assertTrue($validator->isRequired('a[b]'));
+		$this->assertFalse($validator->isRequired('a[c]'));
+		$this->assertTrue($validator->isRequired('e'));
+	}
+
 	/**
 	 * @depends testSetRules
 	 */
@@ -264,6 +307,17 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 
 		$form->setRules(array('name' => array('required')));
 		$this->assertTrue($form->hasRules('name'));
+	}
+
+	public function testHasRulesNested()
+	{
+		$validator = new Validator([
+			'a' => new Validator([
+				'b' => ['required']
+			])
+		]);
+		$this->assertTrue($validator->hasRules('a[b]'));
+		$this->assertFalse($validator->hasRules('a[b][c]'));
 	}
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -307,6 +361,28 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 		$form->getValue($argument);
 	}
 
+	public function testGetValueNested()
+	{
+		$validator = new Validator([
+			'a' => new Validator([
+				'b' => ['required']
+			])
+		]);
+
+		$validator->setValues([
+			'a' => [
+				'b' => 'Foobar'
+			]
+		]);
+
+		$this->assertEquals(['b' => 'Foobar'], $validator->getValue('a'));
+		$this->assertEquals('Foobar', $validator->getValue('a')['b']);
+		$this->assertEquals('Foobar', $validator->a['b']);
+		$this->assertEquals('Foobar', $validator['a']['b']);
+
+		$this->assertEquals('Foobar', $validator->getValue('a[b]'));
+	}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Errors
 
@@ -336,6 +412,21 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 		$form->getErrors($argument);
 	}
 
+	public function testGetErrorsNested()
+	{
+		$validator = new Validator([
+			'a' => new Validator([
+				'b' => ['required']
+			])
+		]);
+
+		$validator->validate([]);
+		$this->assertEquals(['a' => ['b' => ['required' => true]]], $validator->getErrors());
+		$this->assertEquals(['b' => ['required' => true]], $validator->getErrors('a'));
+		$this->assertEquals(['required' => true], $validator->getErrors('a[b]'));
+		$this->assertEquals(true, $validator->getErrors('a[b][required]'));  // unintended side effect
+	}
+
 	/**
 	 * @depends testGetSetErrors
 	 */
@@ -348,6 +439,20 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 		$form->setErrors(array('first_name' => array('required')));
 		$this->assertTrue($form->hasErrors());
 		$this->assertTrue($form->hasErrors('first_name'));
+	}
+
+	public function testHasErrorsNested()
+	{
+		$validator = new Validator([
+			'a' => new Validator([
+				'b' => ['required']
+			])
+		]);
+
+		$validator->validate([]);
+		$this->assertTrue($validator->hasErrors('a'));
+		$this->assertTrue($validator->hasErrors('a[b]'));
+		$this->assertTrue($validator->hasErrors('a[b][required]')); // unintended side effect
 	}
 
 ///////////////////////////////////////////////////////////////////////////////
