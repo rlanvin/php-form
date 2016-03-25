@@ -610,7 +610,7 @@ class Validator implements \ArrayAccess
 		// if the value is NOT required and NOT present, we do no run any other validator
 		if ( Rule\is_empty($value) ) {
 			$required = false;
-			if ( isset($rules['required']) ) {
+			if ( array_key_exists('required', $rules) ) {
 				$required = $rules['required'];
 				if ( is_callable($required) ) {
 					$required = call_user_func_array($required, array($this));
@@ -649,7 +649,12 @@ class Validator implements \ArrayAccess
 					if ( is_callable($param) ) {
 						$param = call_user_func_array($param, array($this));
 					}
-					$ret = call_user_func_array($func, array(&$value, $param));
+
+					if ( $param === true ) { // use default value from the rule
+						$ret = call_user_func_array($func, array(&$value));
+					} else {
+						$ret = call_user_func_array($func, array(&$value, $param));
+					}
 				}
 				// callback function (custom validator)
 				elseif ( is_callable($param) ) {

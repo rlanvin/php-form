@@ -768,4 +768,29 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 		$this->assertFalse($form->validate(array('password' => 'abcdef', 'password_confirm' => 'x')));
 	}
 
+///////////////////////////////////////////////////////////////////////////////
+// Tests with various validators
+
+	public function testDate()
+	{
+		$form = new Validator([
+			'birthday' => ['date']
+		]);
+		$this->assertTrue($form->validate([
+			'birthday' => '2000-01-01'
+		]));
+		$this->assertFalse($form->validate([
+			'birthday' => '01/01/2001'
+		]));
+
+		$form = new Validator([
+			'birthday' => ['date' => null]
+		]);
+		$this->assertTrue($form->validate([
+			'birthday' => '2000-01-01'
+		]));
+		$this->assertTrue($form->validate([
+			'birthday' => '01/01/2001'
+		]));
+	}
 }

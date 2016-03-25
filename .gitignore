@@ -1,3 +1,4 @@
+*.lock
 *.sublime-*
 vendor
 test.php
