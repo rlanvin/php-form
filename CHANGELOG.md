@@ -1,6 +1,23 @@
 # Changelog
 
-## [Unreleased]
+## [2.0] - Unreleased
+
+- Drop support for PHP 5.3 (minimum version is now PHP 5.4)
+- Namespacing: `Form` is now `Form\Validator`
+- `Validator` static class is replaced by the namespace `Form\Rule`
+- Using PSR-4 autoloader
+
+### Rule changes
+
+- The rule `bool` now takes an optionnal parameter to determine type conversion
+- The rule `date` now takes an optionnal parameter to determine the date format
+- The rule `trim` now always return true
+- New rule: `datetime`
+- New rule: `length`
+- New rules: `integer`, `decimal`, `intl_integer` and `intl_decimal`
+- New rules: `ip`, `ipv4`, `ipv6`
+- New rules: `between`, `min`, `max`
+- Remove rules: `min_value` (use `min`) and `max_value` (use `max`)
 
 ## [1.1.0] - 2016-03-25
 
@@ -15,4 +32,5 @@
 - First release, everything before that was unversioned (`dev-master` was used).
 
 [Unreleased]: https://github.com/rlanvin/php-form/compare/v1.1.0...HEAD
-[1.1.0]: https://github.com/rlanvin/php-form/compare/v1.0.0...v.1.1.0
+[2.0]: https://github.com/rlanvin/php-form/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/rlanvin/php-form/compare/v1.0.0...v1.1.0

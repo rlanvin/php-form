@@ -13,6 +13,8 @@
         "ext-intl": "Intl extension is useful for validating formatted numbers"
     },
     "autoload": {
-        "classmap": ["src/"]
+        "psr-4": {
+            "Form\\": "src/"
+        }
     }
 }

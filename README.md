@@ -9,19 +9,19 @@ Lightweight form validation library for PHP, with a concise syntax and powerful 
 
 ```php
 // create the form with rules
-$form = new Form([
+$form = new Form\Validator([
     'name' => ['required', 'trim', 'max_length' => 255],
     'email' => ['required', 'email']
 ]);
 
 if ( $form->validate($_POST) ) {
     // $_POST data is valid
-    save_to_db_or_something($form->getValues());
+    $form->getValues(); // returns an array of sanitized values
 }
 else {
    // $_POST data is not valid
-   display_errors_or_something($form->getErrors());
-   // $form->getValues() can be used to repopulate the form
+   $form->getErrors(); // contains the errors
+   $form->getValues(); // can be used to repopulate the form
 }
 ```
 
@@ -30,13 +30,12 @@ Complete doc is available in [the wiki](https://github.com/rlanvin/php-form/wiki
 ## Requirements
 
 - PHP >= 5.4
-- mbstring extension (http://www.php.net/manual/en/book.mbstring.php)
+- [`mbstring`](http://www.php.net/manual/en/book.mbstring.php) extension 
+- `intl` extension recommended to validate numbers in local format
 
-If you are stuck with PHP 5.3, you can still use the v1.
+If you are stuck with PHP 5.3, you may still use [version 1.1](https://github.com/rlanvin/php-form/releases/tag/v1.1.0).
 
 ## Installation
-
-**Caution** The current branch (1.*) is NOT namespaced and still compatible with PHP 5.3 for historical reasons. The code is made so that you can just add a namespace at the beginning of the file.
 
 The recommended way is to install the lib [through Composer](http://getcomposer.org/).
 
@@ -45,7 +44,7 @@ Just add this to your `composer.json` file:
 ```JSON
 {
     "require": {
-        "rlanvin/php-form": "1.*"
+        "rlanvin/php-form": "2.*"
     }
 }
 ```
