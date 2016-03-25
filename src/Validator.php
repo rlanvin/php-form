@@ -236,7 +236,8 @@ class Validator implements \ArrayAccess
 		self::checkStringNotEmpty($field);
 
 		// return isset($this->rules[$field]) && ! empty($this->rules[$field]);
-		return !empty($this->getRules($field));
+		$rules = $this->getRules($field);
+		return !empty($rules);
 	}
 
 	/**
@@ -548,11 +549,13 @@ class Validator implements \ArrayAccess
 			throw new \InvalidArgumentException(sprintf("Field name must be a string (%s given)", gettype($field)));
 		}
 
-		if ( ! $field ) {
-			return ! empty($this->errors);
+		$errors = $this->errors;
+
+		if ( $field ) {
+			$errors = $this->getErrors($field);
 		}
 
-		return ! empty($this->getErrors($field));
+		return ! empty($errors);
 	}
 
 	public function addError($message, $field = '', $param = true)
