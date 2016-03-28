@@ -30,8 +30,8 @@ Complete doc is available in [the wiki](https://github.com/rlanvin/php-form/wiki
 ## Requirements
 
 - PHP >= 5.4
-- [`mbstring`](http://www.php.net/manual/en/book.mbstring.php) extension 
-- `intl` extension recommended to validate numbers in local format
+- [`mbstring` extension](http://www.php.net/manual/en/book.mbstring.php)
+- [`intl` extension](http://php.net/manual/en/book.intl.php) recommended to validate numbers in local format
 
 If you are stuck with PHP 5.3, you may still use [version 1.1](https://github.com/rlanvin/php-form/releases/tag/v1.1.0).
 

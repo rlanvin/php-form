@@ -135,17 +135,29 @@ class Validator implements \ArrayAccess
 	/**
 	 * Set the rules of the form.
 	 *
-	 * @param $rules array
+	 * This methods can be called two ways:
+	 * setRules(string $field_name, array|self $rules) to set the rules for a field
+	 * or setRules(array $rules) to set the entire rules array
+	 *
+	 * @param $rules array|self An array or a sub-validator
 	 * @return $this
 	 */
-	public function setRules($field_or_rules, array $rules = array())
+	public function setRules($field_or_rules, $rules = array())
 	{
 		// set the rules for one particular field
 		if ( is_string($field_or_rules) ) {
 			if ( ! $field_or_rules ) {
 				throw new \InvalidArgumentException("Field name cannot be empty");
 			}
-			$this->rules[$field_or_rules] = self::expandRulesArray($rules);
+			if ( is_array($rules) ) {
+				$this->rules[$field_or_rules] = self::expandRulesArray($rules);
+			}
+			elseif ( $rules instanceof self ) {
+				$this->rules[$field_or_rules] = $rules;
+			}
+			else {
+				throw new \InvalidArgumentException("Rules must be an array or an instance of ".__CLASS__);
+			}
 			return $this;
 		}
 
@@ -155,7 +167,7 @@ class Validator implements \ArrayAccess
 			return $this;
 		}
 
-		throw new \InvalidArgumentException("Unsupported parameter type");
+		throw new \BadMethodCallException("Unsupported parameter type");
 	}
 
 	/**

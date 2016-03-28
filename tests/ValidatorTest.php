@@ -45,7 +45,7 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 		);
 	}
 
-	public function invalidArguments() 
+	public function invalidArguments()
 	{
 		return array(
 			array(''),
@@ -148,6 +148,15 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals($uncompressed, $form->getRules('name'));
 	}
 
+	public function testSetRulesSubValidator()
+	{
+		$form = new Validator();
+		$form->setRules('address', new Validator([
+			'street' => ['required'],
+			'postcode' => ['required']
+		]));
+	}
+
 	/**
 	 * @dataProvider invalidRules
 	 * @expectedException InvalidArgumentException
@@ -170,13 +179,13 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 
 	/**
 	 * @dataProvider invalidArguments
-	 * @expectedException InvalidArgumentException
+	 * @expectedException BadMethodCallException
 	 */
 	public function testSetRulesInvalidArguments($argument)
 	{
 		// this is valid
-		if ( $argument == array() ) {
-			throw new InvalidArgumentException();
+		if ( $argument == array() || $argument === '' ) {
+			throw new BadMethodCallException();
 		}
 
 		$form = new Validator();
@@ -185,13 +194,13 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 
 	/**
 	 * @dataProvider invalidArguments
-	 * @expectedException InvalidArgumentException
+	 * @expectedException BadMethodCallException
 	 */
 	public function testSetRulesFieldInvalidArguments($argument)
 	{
 		// this is valid
-		if ( $argument == array() ) {
-			throw new InvalidArgumentException();
+		if ( $argument == array() || $argument === '') {
+			throw new BadMethodCallException();
 		}
 
 		$form = new Validator();
@@ -232,6 +241,35 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 		]);
 		$this->assertEquals([
 			'first_name' => ['required' => true, 'min_length' => 2]
+		], $form->getRules());
+	}
+
+	public function testAddRulesSubValidator()
+	{
+		$form = new Validator([
+			'address' => new Validator([
+				'street' => ['required']
+			])
+		]);
+		$form->addRules([
+			'first_name' => ['required']
+		]);
+		$this->assertEquals([
+			'address' => new Validator([
+				'street' => ['required' => true]
+			]),
+			'first_name' => ['required' => true]
+		], $form->getRules());
+
+		$form->getRules('address')->addRules([
+			'postcode' => []
+		]);
+		$this->assertEquals([
+			'address' => new Validator([
+				'street' => ['required' => true],
+				'postcode' => []
+			]),
+			'first_name' => ['required' => true]
 		], $form->getRules());
 	}
 
