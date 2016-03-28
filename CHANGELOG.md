@@ -1,6 +1,8 @@
 # Changelog
 
-## [2.0] - Unreleased
+## [Unreleased]
+
+## [2.0] - 2016-03-28
 
 - Drop support for PHP 5.3 (minimum version is now PHP 5.4)
 - Namespacing: `Form` is now `Form\Validator`
