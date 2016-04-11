@@ -39,6 +39,7 @@
 
 - First release, everything before that was unversioned (`dev-master` was used).
 
-[Unreleased]: https://github.com/rlanvin/php-form/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/rlanvin/php-form/compare/v2.0.1...HEAD
+[2.0.1]: https://github.com/rlanvin/php-form/compare/v2.0.0...v2.0.1
 [2.0]: https://github.com/rlanvin/php-form/compare/v1.1.0...v2.0.0
 [1.1.0]: https://github.com/rlanvin/php-form/compare/v1.0.0...v1.1.0
