@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [2.0.1] - 2016-04-11
+
+- Fix a PHP fatal error when `is_array` is used with `each`
+
 ## [2.0] - 2016-03-28
 
 - Drop support for PHP 5.3 (minimum version is now PHP 5.4)
@@ -35,6 +39,6 @@
 
 - First release, everything before that was unversioned (`dev-master` was used).
 
-[Unreleased]: https://github.com/rlanvin/php-form/compare/v1.1.0...HEAD
-[2.0]: https://github.com/rlanvin/php-form/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/rlanvin/php-form/compare/v2.0.0...HEAD
+[2.0]: https://github.com/rlanvin/php-form/compare/v1.1.0...v2.0.0
 [1.1.0]: https://github.com/rlanvin/php-form/compare/v1.0.0...v1.1.0

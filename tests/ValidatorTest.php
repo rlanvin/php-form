@@ -815,6 +815,14 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 				array('age' => '12')
 			)
 		)), "Default values are not deep-merged (like for a normal each)");
+
+		$form = new Validator(array(
+			'list' => array('is_array', 'each' => new Validator(array(
+				'name' => array('required')
+			)))
+		));
+		$this->assertFalse($form->validate(array('list' => 'foobar')), 'Not an array');
+		$this->assertTrue($form->validate(array('list' => array(array('name'=>'foobar')))), 'List is array and has a name, all good');
 	}
 
 	public function testConditionalValue()

@@ -716,8 +716,8 @@ class Validator implements \ArrayAccess
 		}
 		unset($rules['required']);
 
-		$local_errors = array();
 		foreach ( $rules as $rule => $param ) {
+			$local_errors = array();
 			$ret = true;
 
 			// special iterative validator for arrays
