@@ -465,6 +465,17 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals(true, $validator->getErrors('a[b][required]'));  // unintended side effect
 	}
 
+	public function testGetErrorsNestedEach()
+	{
+		$validator = new Validator([
+			'list' => ['each' => ['max' => 10]]
+		]);
+
+		$this->assertFalse($validator->validate(['list' => [1,2,42]]));
+		$this->assertEquals([2 => ['max' => 10]], $validator->getErrors('list'));
+		$this->assertEquals(['max' => 10], $validator->getErrors('list[2]'));
+	}
+
 	/**
 	 * @depends testGetSetErrors
 	 */
@@ -714,18 +725,10 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 		$this->assertEquals(array('list' => array()), $form->getValues(), 'List is set and casted to array when missing');
 
 		$this->assertFalse($form->validate(array('list' => 'garbage')), 'When not an array, autocasted, but does not validate because max_length failed');
-		$this->assertEquals(array(
-			'each' => array(
-				0 => array('max_length' => 4)
-			)
-		), $form->getErrors('list'));
+		$this->assertEquals([0 => ['max_length' => 4]], $form->getErrors('list'));
 
 		$this->assertFalse($form->validate(array('list' => array('garbage'))), 'When an array with garbage, does not validate');
-		$this->assertEquals(array(
-			'each' => array(
-				0 => array('max_length' => 4)
-			)
-		), $form->getErrors('list'));
+		$this->assertEquals([0 => ['max_length' => 4]], $form->getErrors('list'));
 
 		// with required = false and allow_empty = false
 		$form->setValues(array());
@@ -766,7 +769,7 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 		$this->assertTrue($form->validate(array('list' => array())), 'Ok for an empty array');
 		$form->setValues(array());
 		$this->assertFalse($form->validate(array('list' => array(''))), 'Not ok for an empty array with a empty string inside it');
-		$this->assertEquals(array('each' => array(0 => array('required' => true))), $form->getErrors('list'));
+		$this->assertEquals([0 => array('required' => true)], $form->getErrors('list'));
 	}
 
 	public function testEachWithSubValidator()
@@ -793,11 +796,9 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 		)), "Each can be used with a subform to validate a array of arrays (validation should fail)");
 
 		$this->assertEquals(array(
-			'each' => array(
-				1 => array(
-					'name' => array(
-						'required' => true
-					)
+			1 => array(
+				'name' => array(
+					'required' => true
 				)
 			)
 		), $form->getErrors('list'), 'Error array contains the offset');

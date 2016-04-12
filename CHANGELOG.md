@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- `each` validator is now transparent in the error array
+
 ## [2.0.1] - 2016-04-11
 
 - Fix a PHP fatal error when `is_array` is used with `each`
@@ -31,7 +33,7 @@
 
 - `each` now cast to array in all circumstances
 - `each` now accepts a subform
-- error array for `each` validator now include the offset
+- error array for `each` validator now includes the offset
 
 ## 1.0.0 - 2015-10-12
 

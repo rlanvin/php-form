@@ -62,10 +62,10 @@ class Validator implements \ArrayAccess
 	 * @var array
 	 */
 	protected $options = array(
-		'use_default' => true,
-		'stop_on_error' => true,
+		'use_default' => true, // use the values provided as default values
+		'stop_on_error' => true, // stop at the first error
 		'allow_empty' => true, // bypass all validators when the value is empty (otherwise: run validators even if the value is empty)
-		'ignore_extraneous' => true, // ignore values with no rules (otherwise: throws a validation error)
+		'ignore_extraneous' => true // ignore values with no rules (otherwise: throws a validation error)
 	);
 
 	/**
@@ -751,7 +751,13 @@ class Validator implements \ArrayAccess
 
 			// if the validator failed, we store the name of the validator in the $errors array
 			if ( $ret === false ) {
-				$errors[$rule] = $local_errors;
+				if ( $rule === self::EACH ) {
+					// skip each validator
+					$errors += $local_errors;
+				}
+				else {
+					$errors[$rule] = $local_errors;
+				}
 				if ( $opt['stop_on_error'] ) {
 					return false;
 				}
