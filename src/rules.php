@@ -16,19 +16,18 @@ namespace Form\Rule;
  * value provided is valid (true) or invalid (false).
  *
  * Rules can optionally alter the value provided, acting as a sanitizer.
- * 
+ *
  * Rules can take one additional parameter. To pass the parameter is the
  * Form context, use the following syntax:
  * ['trim']; // no option
  * ['trim' => '/']; // will trim "/"
- *
  */
 
 ///////////////////////////////////////////////////////////////////////////////
 // Core type rules
 
 /**
- * Test if the value is empty
+ * Test if the value is empty.
  */
 function is_empty($value)
 {
@@ -36,7 +35,7 @@ function is_empty($value)
 }
 
 /**
- * Test that the value is an array
+ * Test that the value is an array.
  */
 function is_array($value)
 {
@@ -44,7 +43,7 @@ function is_array($value)
 }
 
 /**
- * Test that the value is a string
+ * Test that the value is a string.
  */
 function is_string($value)
 {
@@ -76,27 +75,26 @@ function is_string($value)
  */
 function bool(&$value, $sanitize = true)
 {
-	$true_values = array('true', 't', 'yes', 'y', 'on', '1', 1, true);
-	$false_values = array('false', 'f', 'no', 'n', 'off', '0', 0, false);
+	$true_values = ['true', 't', 'yes', 'y', 'on', '1', 1, true];
+	$false_values = ['false', 'f', 'no', 'n', 'off', '0', 0, false];
 
 	$ret = false;
 
-	if ( $sanitize === true ) {
+	if ($sanitize === true) {
 		$sanitize = \gettype($value);
 	}
 
 	// see http://stackoverflow.com/questions/13846769/php-in-array-0-value
-	if ( \in_array($value, $true_values, true) ) {
+	if (\in_array($value, $true_values, true)) {
 		$value = $sanitize ? true : $value;
 		$ret = true;
-	}
-	elseif ( \in_array($value, $false_values, true) ) {
+	} elseif (\in_array($value, $false_values, true)) {
 		$value = $sanitize ? false : $value;
 		$ret = true;
 	}
 
-	if ( $ret && $sanitize ) {
-		switch ( $sanitize ) {
+	if ($ret && $sanitize) {
+		switch ($sanitize) {
 			case 'int':
 			case 'integer':
 				$value = (int) $value;
@@ -119,31 +117,30 @@ function bool(&$value, $sanitize = true)
 	return $ret;
 }
 
-/** 
- * Check that the input is a valid date, optionally of a given format
+/**
+ * Check that the input is a valid date, optionally of a given format.
  *
  * @see http://www.php.net/strtotime
  */
 function date($value, $format = 'Y-m-d')
 {
-	if ( ! \is_string($value) ) {
+	if (!\is_string($value)) {
 		return false;
 	}
 
-	if ( $format ) {
+	if ($format) {
 		$ret = \DateTime::createFromFormat($format, $value);
-		if ( $ret ) {
+		if ($ret) {
 			$errors = \DateTime::getLastErrors();
 			if (!empty($errors['warning_count'])) {
 				$ret = false;
 			}
 		}
-	}
-	else {
+	} else {
 		// validate anything, not really recommended
 		try {
 			$ret = new \DateTime($value);
-		} catch ( \Exception $e ) {
+		} catch (\Exception $e) {
 			$ret = false;
 		}
 	}
@@ -178,23 +175,24 @@ function decimal($value)
 
 function intl_decimal(&$value, $locale = null)
 {
-	if ( ! \class_exists('\Locale') ) {
+	if (!\class_exists('\Locale')) {
 		throw new \RuntimeException('intl extension is not installed');
 	}
 
-	if ( ! \is_string($value) && ! \is_int($value) && ! \is_float($value) ) {
+	if (!\is_string($value) && !\is_int($value) && !\is_float($value)) {
 		return false;
 	}
 
-	if ( $locale === null ) {
+	if ($locale === null) {
 		$locale = \Locale::getDefault();
 	}
 
 	$fmt = new \NumberFormatter($locale, \NumberFormatter::DECIMAL);
 	$ret = $fmt->parse($value);
 
-	if ( $ret !== false ) {
+	if ($ret !== false) {
 		$value = $ret;
+
 		return true;
 	}
 
@@ -205,10 +203,12 @@ function intl_integer(&$value, $locale)
 {
 	$original_value = $value;
 	$ret = intl_decimal($value, $locale);
-	if ( $ret == (int) $ret ) {
+	if ($ret == (int) $ret) {
 		$value = (int) $ret;
+
 		return true;
 	}
+
 	return false;
 }
 
@@ -223,21 +223,21 @@ function email($value)
 function url(&$value, $protocols = null)
 {
 	$ret = filter_var($value, FILTER_VALIDATE_URL);
-	if ( $ret === false ) {
+	if ($ret === false) {
 		return false;
 	}
 
-	if ( $protocols === null ) {
+	if ($protocols === null) {
 		return true;
 	}
 
-	if ( ! \is_array($protocols) ) {
-		$protocols = array($protocols);
+	if (!\is_array($protocols)) {
+		$protocols = [$protocols];
 	}
 
-	foreach ( $protocols as $proto ) {
+	foreach ($protocols as $proto) {
 		$proto .= '://';
-		if ( substr($value, 0, strlen($proto)) == $proto ) {
+		if (substr($value, 0, strlen($proto)) == $proto) {
 			return true;
 		}
 	}
@@ -260,7 +260,6 @@ function ipv6($value)
 	return ip($value, FILTER_FLAG_IPV6);
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // Value rules
 
@@ -270,8 +269,9 @@ function ipv6($value)
  */
 function in($value, array $param)
 {
-	if ( \is_array($value) ) {
+	if (\is_array($value)) {
 		$ret = array_diff($value, $param);
+
 		return empty($ret);
 	}
 
@@ -284,33 +284,33 @@ function in($value, array $param)
  */
 function in_keys($value, array $param)
 {
-	if ( \is_array($value) ) {
+	if (\is_array($value)) {
 		$ret = array_diff($value, array_keys($param));
+
 		return empty($ret);
 	}
-	
-	if ( ! is_string($value) && ! is_int($value) ) {
+
+	if (!is_string($value) && !is_int($value)) {
 		return false;
 	}
 
 	return array_key_exists($value, $param);
 }
 
-
 function between($value, $between)
 {
-	if ( ! is_array($between) || count($between) != 2 ) {
+	if (!is_array($between) || count($between) != 2) {
 		throw new \InvalidArgumentException("'between' rule takes an array of exactly two values");
 	}
 
-	list($min,$max) = $between;
-	if ( $min !== null ) {
-		if ( ! min($value, $min) ) {
+	list($min, $max) = $between;
+	if ($min !== null) {
+		if (!min($value, $min)) {
 			return false;
 		}
 	}
-	if ( $max !== null ) {
-		if ( ! max($value, $max) ) {
+	if ($max !== null) {
+		if (!max($value, $max)) {
 			return false;
 		}
 	}
@@ -330,18 +330,18 @@ function min($value, $param)
 
 function length($value, $between)
 {
-	if ( ! is_array($between) || count($between) != 2 ) {
+	if (!is_array($between) || count($between) != 2) {
 		throw new \InvalidArgumentException("'length' rule takes an array of exactly two values");
 	}
 
-	list($min,$max) = $between;
-	if ( $min !== null ) {
-		if ( ! min_length($value, $min) ) {
+	list($min, $max) = $between;
+	if ($min !== null) {
+		if (!min_length($value, $min)) {
 			return false;
 		}
 	}
-	if ( $max !== null ) {
-		if ( ! max_length($value, $max) ) {
+	if ($max !== null) {
+		if (!max_length($value, $max)) {
 			return false;
 		}
 	}
@@ -350,30 +350,32 @@ function length($value, $between)
 }
 
 /**
- * Check that the value is a maximum length
+ * Check that the value is a maximum length.
  */
 function max_length($value, $length)
 {
-	if ( ! \is_string($value) && ! \is_int($value) ) {
+	if (!\is_string($value) && !\is_int($value)) {
 		return false;
 	}
-	if ( (! \is_int($length) && ! ctype_digit($length)) || $length < 0 ) {
+	if ((!\is_int($length) && !ctype_digit($length)) || $length < 0) {
 		throw new \InvalidArgumentException('The length must be an positive integer');
 	}
+
 	return mb_strlen($value) <= $length;
 }
 
 /**
- * Check that the value is a minimum length
+ * Check that the value is a minimum length.
  */
 function min_length($value, $length)
 {
-	if ( ! \is_string($value) && ! \is_int($value) ) {
+	if (!\is_string($value) && !\is_int($value)) {
 		return false;
 	}
-	if ( (! \is_int($length) && ! ctype_digit($length)) || $length < 0 ) {
+	if ((!\is_int($length) && !ctype_digit($length)) || $length < 0) {
 		throw new \InvalidArgumentException('The length must be an positive integer');
 	}
+
 	return mb_strlen($value) >= $length;
 }
 
@@ -382,22 +384,22 @@ function min_length($value, $length)
  *
  * @param $value mixed
  * @param $regexp string Regular expression
+ *
  * @return bool
  */
 function regexp($value, $regexp)
 {
-	if ( ! \is_string($regexp) ) {
+	if (!\is_string($regexp)) {
 		throw new \InvalidArgumentException('The regular expression must be a string');
 	}
-	if ( ! $regexp ) {
+	if (!$regexp) {
 		throw new \InvalidArgumentException('The regular expression cannot be empty');
 	}
 
-	return !! filter_var($value, FILTER_VALIDATE_REGEXP, array(
-		'options' => array('regexp' => $regexp)
-	));
+	return (bool) filter_var($value, FILTER_VALIDATE_REGEXP, [
+		'options' => ['regexp' => $regexp],
+	]);
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Special rules
@@ -406,36 +408,26 @@ function regexp($value, $regexp)
  * Check that the value is a string and trim it of unwanted character.
  *
  * @param $value mixed
- * @param $character_mask string The list of characters to be trimmed.
+ * @param $character_mask string The list of characters to be trimmed
+ *
  * @see http://www.php.net/trim
+ *
  * @return bool
  */
 function trim(&$value, $character_mask = null)
 {
 	// trim will trigger an error if called with something else than a string or an int
-	if ( ! \is_string($value) && ! \is_int($value) && ! \is_float($value) ) {
+	if (!\is_string($value) && !\is_int($value) && !\is_float($value)) {
 		return true;
 	}
 
-	if ( $character_mask === null ) {
+	if ($character_mask === null) {
 		$character_mask = " \t\n\r\0\x0B";
-	}
-	elseif ( ! \is_string($character_mask) ) {
+	} elseif (!\is_string($character_mask)) {
 		throw new \InvalidArgumentException("Character mask for 'trim' must be a string");
 	}
 
 	$value = \trim($value, $character_mask);
+
 	return true;
 }
-
-
-
-// function date_max($value, $param)
-// {
-// 	return strtotime($value) <= $param;
-// }
-
-// function date_min($value, $param)
-// {
-// 	return strtotime($value) >= $param;
-// }
