@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+- Drop support for PHP <= 7.0 (minimum version is now PHP 7.1)
+- Add support for PHP 8.0
+
+## Added
+
 - `each` validator is now transparent in the error array
 
 ## [2.0.1] - 2016-04-11

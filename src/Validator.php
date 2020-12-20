@@ -268,7 +268,13 @@ class Validator implements \ArrayAccess
 
 		self::checkStringNotEmpty($rule_name, 'Rule name');
 
-		if ( ! array_key_exists($rule_name, $rules) ) {
+		// array_key_exists doesn't support ArrayAccess interface in PHP 8.0 apparently
+		// @see https://bugs.php.net/bug.php?id=80162
+		if ( $rules instanceof self && ! $rules->offsetExists($rule_name) ) {
+			return null;
+		}
+
+		if (! array_key_exists($rule_name, $rules) ) {
 			return null;
 		}
 
