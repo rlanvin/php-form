@@ -1,8 +1,11 @@
 <?php
 
-use Form\Validator;
+namespace Form\Tests;
 
-class ValidatorTest extends PHPUnit_Framework_TestCase
+use Form\Validator;
+use PHPUnit\Framework\TestCase;
+
+class ValidatorTest extends TestCase
 {
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -51,7 +54,7 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 			array(''),
 			array(null),
 			array(array()),
-			array(new stdClass),
+			array(new \stdClass),
 			array(42),
 			array((double) 42)
 		);
@@ -77,10 +80,10 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 
 	/**
 	 * @dataProvider invalidRules
-	 * @expectedException InvalidArgumentException
 	 */
 	public function testExpandRulesInvalid($rules)
 	{
+		$this->expectException(\InvalidArgumentException::class);
 		Validator::expandRulesArray($rules);
 	}
 
@@ -102,13 +105,13 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 
 	/**
 	 * @dataProvider invalidArguments
-	 * @expectedException InvalidArgumentException
 	 */
 	public function testGetRulesInvalidArguments($argument)
 	{
+		$this->expectException(\InvalidArgumentException::class);
 		// this is allowed in getRules()
 		if ( $argument === '' ) {
-			throw new InvalidArgumentException();
+			throw new \InvalidArgumentException();
 		}
 
 		$form = new Validator();
@@ -150,6 +153,7 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 
 	public function testSetRulesSubValidator()
 	{
+		$this->expectNotToPerformAssertions();
 		$form = new Validator();
 		$form->setRules('address', new Validator([
 			'street' => ['required'],
@@ -159,50 +163,54 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 
 	/**
 	 * @dataProvider invalidRules
-	 * @expectedException InvalidArgumentException
 	 */
 	public function testSetRulesInvalid($rules)
 	{
+		$this->expectException(\InvalidArgumentException::class);
 		$form = new Validator();
 		$form->setRules($rules);
 	}
 
 	/**
 	 * @dataProvider invalidRules
-	 * @expectedException InvalidArgumentException
 	 */
 	public function testSetRulesFieldInvalid($rules)
 	{
+		$this->expectException(\InvalidArgumentException::class);
 		$form = new Validator();
 		$form->setRules('name', $rules);
 	}
 
 	/**
 	 * @dataProvider invalidArguments
-	 * @expectedException BadMethodCallException
 	 */
 	public function testSetRulesInvalidArguments($argument)
 	{
 		// this is valid
 		if ( $argument == array() || $argument === '' ) {
-			throw new BadMethodCallException();
+			//throw new BadMethodCallException();
+			$this->expectNotToPerformAssertions();
+			return;
 		}
 
+		$this->expectException(\BadMethodCallException::class);
 		$form = new Validator();
 		$form->setRules($argument);
 	}
 
 	/**
 	 * @dataProvider invalidArguments
-	 * @expectedException BadMethodCallException
 	 */
 	public function testSetRulesFieldInvalidArguments($argument)
 	{
 		// this is valid
 		if ( $argument == array() || $argument === '') {
-			throw new BadMethodCallException();
+			//throw new BadMethodCallException();
+			$this->expectNotToPerformAssertions();
+			return;
 		}
 
+		$this->expectException(\BadMethodCallException::class);
 		$form = new Validator();
 		$form->setRules($argument, array());
 	}
@@ -288,20 +296,20 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 
 	/**
 	 * @dataProvider invalidArguments
-	 * @expectedException InvalidArgumentException
 	 */
 	public function testGetRuleValueInvalidArguments1($argument)
 	{
+		$this->expectException(\InvalidArgumentException::class);
 		$form = new Validator();
 		$form->getRuleValue($argument, 'required');
 	}
 
 	/**
 	 * @dataProvider invalidArguments
-	 * @expectedException InvalidArgumentException
 	 */
 	public function testGetRuleValueInvalidArguments2($argument)
 	{
+		$this->expectException(\InvalidArgumentException::class);
 		$form = new Validator();
 		$form->getRuleValue('my_field', $argument);
 	}
@@ -391,10 +399,10 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 
 	/**
 	 * @dataProvider invalidArguments
-	 * @expectedException InvalidArgumentException
 	 */
 	public function testGetValueArguments($argument)
 	{
+		$this->expectException(\InvalidArgumentException::class);
 		$form = new Validator();
 		$form->getValue($argument);
 	}
@@ -438,14 +446,15 @@ class ValidatorTest extends PHPUnit_Framework_TestCase
 
 	/**
 	 * @dataProvider invalidArguments
-	 * @expectedException InvalidArgumentException
 	 */
 	public function testGetErrorsInvalidArguments($argument)
 	{
 		// this is valid
 		if ( $argument === '' ) {
-			throw new InvalidArgumentException();
+			$this->expectNotToPerformAssertions();
+			return;
 		}
+		$this->expectException(\InvalidArgumentException::class);
 		$form = new Validator();
 		$form->getErrors($argument);
 	}

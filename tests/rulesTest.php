@@ -1,8 +1,12 @@
 <?php
 
+namespace Form\Tests;
+
 require_once __DIR__.'/../src/rules.php';
 
-class rulesTest extends PHPUnit_Framework_TestCase
+use PHPUnit\Framework\TestCase;
+
+class rulesTest extends TestCase
 {
 ///////////////////////////////////////////////////////////////////////////////
 // Core type rules
@@ -22,7 +26,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 			[array(),          true, false,  true],
 			[array('foobar'), false, false,  true],
 			['foobar',        false,  true, false],
-			[new stdClass(),  false, false, false],
+			[new \stdClass(), false, false, false],
 		];
 	}
 
@@ -31,7 +35,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	 */
 	public function testIsArray($value, $is_empty, $is_string, $is_array)
 	{
-		$this->assertEquals($is_array, Form\Rule\is_array($value));
+		$this->assertEquals($is_array, \Form\Rule\is_array($value));
 	}
 
 	/**
@@ -39,7 +43,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	 */
 	public function testIsEmpty($value, $is_empty, $is_string, $is_array)
 	{
-		$this->assertEquals($is_empty, Form\Rule\is_empty($value));
+		$this->assertEquals($is_empty, \Form\Rule\is_empty($value));
 	}
 
 	/**
@@ -47,7 +51,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	 */
 	public function testIsString($value, $is_empty, $is_string, $is_array)
 	{
-		$this->assertEquals($is_string, Form\Rule\is_string($value));
+		$this->assertEquals($is_string, \Form\Rule\is_string($value));
 	}
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -81,7 +85,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 			['foobar',  false, 'foobar'],
 			[null,      false,     null],
 			[array(),   false,  array()],
-			[new stdClass(), false, new stdClass()],
+			[new \stdClass(), false, new \stdClass()],
 		);
 	}
 
@@ -90,7 +94,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	 */
 	public function testBool($value, $is_bool, $casted_value)
 	{
-		$this->assertEquals($is_bool, Form\Rule\bool($value));
+		$this->assertEquals($is_bool, \Form\Rule\bool($value));
 		$this->assertEquals($casted_value, $value);
 	}
 
@@ -100,7 +104,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	public function testBoolNoCast($value, $is_bool, $casted_value)
 	{
 		$original_value = $value;
-		$this->assertEquals($is_bool, Form\Rule\bool($value, false));
+		$this->assertEquals($is_bool, \Form\Rule\bool($value, false));
 		$this->assertEquals($original_value, $value);
 	}
 
@@ -109,9 +113,9 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	 */
 	public function testBoolCastBool($value, $is_bool, $casted_value)
 	{
-		$this->assertEquals($is_bool, Form\Rule\bool($value, 'bool'));
+		$this->assertEquals($is_bool, \Form\Rule\bool($value, 'bool'));
 		if ( $is_bool ) {
-			$this->assertInternalType('bool', $value);
+			$this->assertIsBool($value);
 			$this->assertEquals((bool) $casted_value, $value);
 		}
 		else {
@@ -124,9 +128,9 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	 */
 	public function testBoolCastString($value, $is_bool, $casted_value)
 	{
-		$this->assertEquals($is_bool, Form\Rule\bool($value, 'string'));
+		$this->assertEquals($is_bool, \Form\Rule\bool($value, 'string'));
 		if ( $is_bool ) {
-			$this->assertInternalType('string', $value);
+			$this->assertIsString($value);
 			$this->assertEquals($casted_value ? '1' : '0', $value);
 		}
 		else {
@@ -139,9 +143,9 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	 */
 	public function testBoolCastInt($value, $is_bool, $casted_value)
 	{
-		$this->assertEquals($is_bool, Form\Rule\bool($value, 'int'));
+		$this->assertEquals($is_bool, \Form\Rule\bool($value, 'int'));
 		if ( $is_bool ) {
-			$this->assertInternalType('int', $value);
+			$this->assertIsInt($value);
 			$this->assertEquals($casted_value ? 1 : 0, $value);
 		}
 		else {
@@ -183,7 +187,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	 */
 	public function testDate($value, $format, $is_date)
 	{
-		$this->assertEquals($is_date, Form\Rule\date($value, $format));
+		$this->assertEquals($is_date, \Form\Rule\date($value, $format));
 	}
 
 	/**
@@ -191,7 +195,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	 */
 	public function testDatetime($value, $format, $is_date, $is_datetime)
 	{
-		$this->assertEquals($is_datetime, Form\Rule\datetime($value));
+		$this->assertEquals($is_datetime, \Form\Rule\datetime($value));
 	}
 
 	/**
@@ -199,7 +203,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	 */
 	public function testTime($value, $format, $is_date, $is_datetime, $is_time)
 	{
-		$this->assertEquals($is_time, Form\Rule\time($value));
+		$this->assertEquals($is_time, \Form\Rule\time($value));
 	}
 
 	public function numericValues()
@@ -234,7 +238,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	 */
 	public function testNumeric($value, $is_numeric)
 	{
-		$this->assertEquals($is_numeric, Form\Rule\numeric($value));
+		$this->assertEquals($is_numeric, \Form\Rule\numeric($value));
 	}
 
 	/**
@@ -242,7 +246,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	 */
 	public function testInteger($value, $is_numeric, $is_integer)
 	{
-		$this->assertEquals($is_integer, Form\Rule\integer($value));
+		$this->assertEquals($is_integer, \Form\Rule\integer($value));
 	}
 
 	/**
@@ -250,7 +254,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	 */
 	public function testDecimal($value, $is_numeric, $is_integer, $locales, $is_decimal)
 	{
-		$this->assertEquals($is_decimal, Form\Rule\decimal($value));
+		$this->assertEquals($is_decimal, \Form\Rule\decimal($value));
 	}
 
 	/**
@@ -262,17 +266,17 @@ class rulesTest extends PHPUnit_Framework_TestCase
 		if ( $locales ) {
 			foreach ( $locales as $locale => $float_version ) {
 				if ( $float_version === false ) {
-					$this->assertFalse(Form\Rule\intl_decimal($value, $locale), "$original_value is not a decimal in $locale (is it $value)");
+					$this->assertFalse(\Form\Rule\intl_decimal($value, $locale), "$original_value is not a decimal in $locale (is it $value)");
 				}
 				else {
-					$this->assertTrue(Form\Rule\intl_decimal($value, $locale), "$original_value is a valid decimal in $locale");
+					$this->assertTrue(\Form\Rule\intl_decimal($value, $locale), "$original_value is a valid decimal in $locale");
 					$this->assertEquals($float_version, $value);
 				}
 				$value = $original_value;
 			}
 		}
 		else {
-			$this->assertFalse(Form\Rule\intl_decimal($value));
+			$this->assertFalse(\Form\Rule\intl_decimal($value));
 		}
 	}
 
@@ -291,7 +295,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	 */
 	public function testEmail($value, $is_email)
 	{
-		$this->assertEquals($is_email, Form\Rule\email($value));
+		$this->assertEquals($is_email, \Form\Rule\email($value));
 	}
 
 	public function urlValues()
@@ -318,7 +322,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	 */
 	public function testUrl($value, $protocols, $is_url)
 	{
-		$this->assertEquals($is_url, Form\Rule\url($value, $protocols));
+		$this->assertEquals($is_url, \Form\Rule\url($value, $protocols));
 	}
 
 	public function ipValues()
@@ -344,7 +348,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	 */
 	public function testIp($value, $ipv4, $ipv6)
 	{
-		$this->assertEquals($ipv4 || $ipv6, Form\Rule\ip($value));
+		$this->assertEquals($ipv4 || $ipv6, \Form\Rule\ip($value));
 	}
 
 	/**
@@ -352,7 +356,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	 */
 	public function testIpv4($value, $ipv4, $ipv6)
 	{
-		$this->assertEquals($ipv4, Form\Rule\ipv4($value));
+		$this->assertEquals($ipv4, \Form\Rule\ipv4($value));
 	}
 
 	/**
@@ -360,7 +364,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	 */
 	public function testIpv6($value, $ipv4, $ipv6)
 	{
-		$this->assertEquals($ipv6, Form\Rule\ipv6($value));
+		$this->assertEquals($ipv6, \Form\Rule\ipv6($value));
 	}
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -377,8 +381,8 @@ class rulesTest extends PHPUnit_Framework_TestCase
 			[42,        true, array('4','2','42')],
 			[42,       false, array(4,2)],
 			[0,         true, array(0,1)],
-			[new stdClass(),  true, array(new stdClass())],
-			[new stdClass(), false, array('something')],
+			[new \stdClass(),  true, array(new \stdClass())],
+			[new \stdClass(), false, array('something')],
 			[array('foo','bar'), true, array('foo','bar','foobar')],
 			[array('foo','bar'), false, array('foo')],
 		);
@@ -389,7 +393,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	 */
 	public function testIn($value, $is_in, $array)
 	{
-		$this->assertEquals($is_in, Form\Rule\in($value, $array));
+		$this->assertEquals($is_in, \Form\Rule\in($value, $array));
 	}
 
 	public function inKeysValues()
@@ -402,8 +406,8 @@ class rulesTest extends PHPUnit_Framework_TestCase
 			['1',       true, array(1 => 'Foo', 2 => 'Bar')],
 			[1,        true, array(1 => 'Foo', 2 => 'Bar')],
 			[42,       false, array(42)],
-			[new stdClass(),  false, array(new stdClass())],
-			[new stdClass(), false, array('something')],
+			[new \stdClass(),  false, array(new \stdClass())],
+			[new \stdClass(), false, array('something')],
 			[array('foo','bar'), false, array('foo','bar','foobar')],
 			[array('foo','bar'), true, array('foo' => 'XX', 'bar' => 'XX', 'foobar' => 'XX')],
 			[array('foo','bar'), false, array('foo')],
@@ -416,7 +420,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	 */
 	public function testInKeys($value, $is_in_keys, $array)
 	{
-		$this->assertEquals($is_in_keys, Form\Rule\in_keys($value, $array));
+		$this->assertEquals($is_in_keys, \Form\Rule\in_keys($value, $array));
 	}
 
 
@@ -466,9 +470,11 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	public function testValueMin($value, $between, $is_valid)
 	{
 		list($min,$max) = $between;
-		if ( $min !== null ) {
-			$this->assertEquals($is_valid, Form\Rule\min($value, $min));
+		if ($min === null) {
+			$this->expectNotToPerformAssertions();
+			return;
 		}
+		$this->assertEquals($is_valid, \Form\Rule\min($value, $min));
 	}
 
 	/**
@@ -477,9 +483,11 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	public function testValueMax($value, $between, $min_valid, $is_valid)
 	{
 		list($min,$max) = $between;
-		if ( $max !== null ) {
-			$this->assertEquals($is_valid, Form\Rule\max($value, $max));
+		if ( $max === null ) {
+			$this->expectNotToPerformAssertions();
+			return;
 		}
+		$this->assertEquals($is_valid, \Form\Rule\max($value, $max));
 	}
 
 	/**
@@ -487,7 +495,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	 */
 	public function testValueBetween($value, $between, $min_valid, $max_valid, $is_valid)
 	{
-		$this->assertEquals($is_valid, Form\Rule\between($value, $between));
+		$this->assertEquals($is_valid, \Form\Rule\between($value, $between));
 	}
 
 	public function lengthValues()
@@ -507,7 +515,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 			[array(),    [1,1],     false,  false,    false],
 			[null,    [1,1],     false,  false,    false],
 			[false,    [1,1],     false,  false,    false],
-			[new stdClass(),    [1,1],     false,  false,    false],
+			[new \stdClass(),    [1,1],     false,  false,    false],
 		);
 	}
 
@@ -515,7 +523,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	{
 		return array(
 			[null],
-			[new stdClass()],
+			[new \stdClass()],
 			[array()],
 			[-1]
 		);
@@ -528,7 +536,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	{
 		list($min,$max) = $between;
 		if ( $min !== null ) {
-			$this->assertEquals($is_valid, Form\Rule\min_length($value, $min));
+			$this->assertEquals($is_valid, \Form\Rule\min_length($value, $min));
 		}
 	}
 
@@ -539,7 +547,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	{
 		list($min,$max) = $between;
 		if ( $max !== null ) {
-			$this->assertEquals($is_valid, Form\Rule\max_length($value, $max));
+			$this->assertEquals($is_valid, \Form\Rule\max_length($value, $max));
 		}
 	}
 
@@ -548,48 +556,38 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	 */
 	public function testLength($value, $between, $min_valid, $max_valid, $is_valid)
 	{
-		$this->assertEquals($is_valid, Form\Rule\length($value, $between));
+		$this->assertEquals($is_valid, \Form\Rule\length($value, $between));
 	}
 
 	/**
 	 * @dataProvider invalidLengths
-	 * @expectedException InvalidArgumentException
 	 */
 	public function testInvalidMinLength($length)
 	{
-		Form\Rule\min_length('foobar', $length);
+		$this->expectException(\InvalidArgumentException::class);
+		\Form\Rule\min_length('foobar', $length);
 	}
 
 	/**
 	 * @dataProvider invalidLengths
-	 * @expectedException InvalidArgumentException
 	 */
 	public function testInvalidMaxLength($length)
 	{
-		Form\Rule\max_length('foobar', $length);
+		$this->expectException(\InvalidArgumentException::class);
+		\Form\Rule\max_length('foobar', $length);
 	}
 
 	/**
 	 * @dataProvider invalidLengths
-	 * @expectedException InvalidArgumentException
 	 */
 	public function testInvalidLength($length)
 	{
-		Form\Rule\length('foobar', $length);
+		$this->expectException(\InvalidArgumentException::class);
+		\Form\Rule\length('foobar', $length);
 	}
 
 	public function regexpValues()
 	{
-		// $regexp = ;
-		// $this->assertTrue(Form\Rule\regexp('this-is-valid', $regexp));
-		// $this->assertTrue(Form\Rule\regexp(42, $regexp));
-		// $this->assertFalse(Form\Rule\regexp('This is not!', $regexp));
-		// $this->assertFalse(Form\Rule\regexp(array(), $regexp));
-		// $this->assertFalse(Form\Rule\regexp(false, $regexp));
-		// $this->assertFalse(Form\Rule\regexp(null, $regexp));
-		// $this->assertFalse(Form\Rule\regexp(new stdClass(), $regexp));
-		// $this->assertFalse(Form\Rule\regexp(42.5, $regexp));
-
 		return array(
 			// value                  regexp            is_valid
 			['this-is-valid',  '/^[0-9a-zA-Z\-]*$/',     true],
@@ -598,7 +596,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 			[array(),          '/^[0-9a-zA-Z\-]*$/',     false],
 			[false,            '/^[0-9a-zA-Z\-]*$/',     false],
 			[null,             '/^[0-9a-zA-Z\-]*$/',     false],
-			[new stdClass(),   '/^[0-9a-zA-Z\-]*$/',     false],
+			[new \stdClass(),   '/^[0-9a-zA-Z\-]*$/',     false],
 			[42.5,             '/^[0-9a-zA-Z\-]*$/',     false],
 		);
 	}
@@ -607,7 +605,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	{
 		return array(
 			[array()],
-			[new stdClass()],
+			[new \stdClass()],
 			[null],
 			[42],
 			[42.5],
@@ -620,16 +618,16 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	 */
 	public function testRegexp($value, $regexp, $is_valid)
 	{
-		$this->assertEquals($is_valid, Form\Rule\regexp($value, $regexp));
+		$this->assertEquals($is_valid, \Form\Rule\regexp($value, $regexp));
 	}
 
 	/**
 	 * @dataProvider invalidRegexps
-	 * @expectedException InvalidArgumentException
 	 */
 	public function testInvalidRegexps($regexp)
 	{
-		Form\Rule\regexp('something', $regexp);
+		$this->expectException(\InvalidArgumentException::class);
+		\Form\Rule\regexp('something', $regexp);
 	}
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -645,7 +643,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 			["\t", ''],
 
 			[array(), array()],
-			[new stdClass(), new stdClass()],
+			[new \stdClass(), new \stdClass()],
 			[null, null],
 			[42.5, 42.5]
 		);
@@ -655,7 +653,7 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	{
 		return array(
 			[array()],
-			[new stdClass()],
+			[new \stdClass()],
 			[42.5],
 		);
 	}
@@ -666,17 +664,17 @@ class rulesTest extends PHPUnit_Framework_TestCase
 	public function testTrim($value, $trimmed_value, $mask = null)
 	{
 		$original_value = $value;
-		$this->assertTrue(Form\Rule\trim($value, $mask));
+		$this->assertTrue(\Form\Rule\trim($value, $mask));
 		$this->assertEquals($trimmed_value, $value);
 	}
 
 	/**
 	 * @dataProvider invalidTrim
-	 * @expectedException InvalidArgumentException
 	 */
 	public function testInvalidTrim($mask)
 	{
+		$this->expectException(\InvalidArgumentException::class);
 		$value = 'foobar';
-		Form\Rule\trim($value, $mask);
+		\Form\Rule\trim($value, $mask);
 	}
 }
