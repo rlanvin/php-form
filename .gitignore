@@ -2,3 +2,4 @@
 *.sublime-*
 vendor
 test.php
+*.cache

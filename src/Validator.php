@@ -108,6 +108,8 @@ class Validator implements \ArrayAccess
 	 */
 	public static function expandFieldName($field)
 	{
+		$matches = [];
+
 		if (!preg_match('/^(\w+)((\[\w+\])*)$/', $field, $matches)) {
 			return [$field];
 		}
@@ -153,21 +155,23 @@ class Validator implements \ArrayAccess
 			if (!$field_or_rules) {
 				throw new \InvalidArgumentException('Field name cannot be empty');
 			}
+
 			if (is_array($rules)) {
 				$this->rules[$field_or_rules] = self::expandRulesArray($rules);
-			} elseif ($rules instanceof self) {
-				$this->rules[$field_or_rules] = $rules;
-			} else {
-				throw new \InvalidArgumentException('Rules must be an array or an instance of '.__CLASS__);
+				return $this;
 			}
 
-			return $this;
+			if ($rules instanceof self) {
+				$this->rules[$field_or_rules] = $rules;
+				return $this;
+			}
+
+			throw new \InvalidArgumentException('Rules must be an array or an instance of '.__CLASS__);
 		}
 
 		// set the rules of the form
 		if (is_array($field_or_rules)) {
 			$this->rules = self::parseRules($field_or_rules);
-
 			return $this;
 		}
 
@@ -312,13 +316,20 @@ class Validator implements \ArrayAccess
 
 			if (is_array($field_rules)) {
 				$field_rules = self::expandRulesArray($field_rules);
-			} elseif ($field_rules instanceof self) {
-				// do nothing
-			} elseif (is_callable($field_rules)) {
-				// do nothing
-			} else {
-				throw new \InvalidArgumentException("Invalid rules for field $field, must be array, closure or ".__CLASS__);
+				continue;
 			}
+
+			if ($field_rules instanceof self) {
+				// do nothing
+				continue;
+			}
+
+			if (is_callable($field_rules)) {
+				// do nothing
+				continue;
+			}
+			
+			throw new \InvalidArgumentException("Invalid rules for field $field, must be array, closure or ".__CLASS__);
 		}
 
 		return $rules;
@@ -347,23 +358,31 @@ class Validator implements \ArrayAccess
 			if (is_int($key)) {
 				self::checkStringNotEmpty($param, 'Rule name');
 				$new_array[$param] = true;
-			} elseif ($key == '') {
+				continue;
+			}
+
+			if ($key == '') {
 				throw new \InvalidArgumentException('Rule name cannot be empty');
-			} elseif ($key == self::EACH) {
+			}
+
+			if ($key == self::EACH) {
 				// these special keys have nested rules
 				if (is_array($param)) {
 					$new_array[$key] = self::expandRulesArray($param);
-				} elseif ($param instanceof self) {
+					continue;
+				}
+
+				if ($param instanceof self) {
 					// do nothing at this stage
 					$new_array[$key] = $param;
-				} else {
-					throw new \InvalidArgumentException('The rule "each" needs an array or a '.__CLASS__);
+					continue;
 				}
+
+				throw new \InvalidArgumentException('The rule "each" needs an array or a '.__CLASS__);
 			}
+
 			// nothing to flip
-			else {
-				$new_array[$key] = $param;
-			}
+			$new_array[$key] = $param;
 		}
 
 		return $new_array;
@@ -397,18 +416,18 @@ class Validator implements \ArrayAccess
 
 		if (array_key_exists($field, $this->values)) {
 			return $this->values[$field];
-		} else {
-			$field = self::expandFieldName($field);
-			$values = $this->values;
-			foreach ($field as $f) {
-				if (!isset($values[$f])) {
-					return $default;
-				}
-				$values = $values[$f];
-			}
-
-			return $values;
 		}
+
+		$field = self::expandFieldName($field);
+		$values = $this->values;
+		foreach ($field as $f) {
+			if (!isset($values[$f])) {
+				return $default;
+			}
+			$values = $values[$f];
+		}
+
+		return $values;
 	}
 
 	/**
@@ -542,16 +561,16 @@ class Validator implements \ArrayAccess
 		}
 
 		if (isset($this->errors[$field])) {
-			$errors = $this->errors[$field];
-		} else {
-			$field = self::expandFieldName($field);
-			$errors = $this->errors;
-			foreach ($field as $f) {
-				if (!isset($errors[$f])) {
-					return [];
-				}
-				$errors = $errors[$f];
+			return $this->errors[$field];
+		}
+
+		$field = self::expandFieldName($field);
+		$errors = $this->errors;
+		foreach ($field as $f) {
+			if (!isset($errors[$f])) {
+				return [];
 			}
+			$errors = $errors[$f];
 		}
 
 		return $errors;
