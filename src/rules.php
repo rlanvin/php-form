@@ -201,7 +201,6 @@ function intl_decimal(&$value, $locale = null)
 
 function intl_integer(&$value, $locale)
 {
-	$original_value = $value;
 	$ret = intl_decimal($value, $locale);
 	if ($ret == (int) $ret) {
 		$value = (int) $ret;
